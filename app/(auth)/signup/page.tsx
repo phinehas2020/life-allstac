@@ -41,6 +41,8 @@ export default function SignUpPage() {
         return
       }
 
+      // Sign up with username in metadata
+      // The database trigger will automatically create the user record
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -61,12 +63,6 @@ export default function SignUpPage() {
       }
 
       if (data?.user) {
-        // Update the user's username in the database
-        await supabase
-          .from("users")
-          .update({ username })
-          .eq("id", data.user.id)
-
         toast({
           title: "Success",
           description: "Account created successfully. Please check your email to verify your account.",
