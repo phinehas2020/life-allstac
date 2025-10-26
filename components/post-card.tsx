@@ -145,10 +145,15 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
         ) : (
           <Link href={`/post/${post.id}`}>
             <div className="relative overflow-hidden">
-              <img
+              <Image
                 src={post.media_url}
                 alt={post.caption || "User uploaded content"}
-                className="w-full h-auto transition-transform group-hover:scale-105"
+                width={400}
+                height={400}
+                className="w-full h-auto transition-transform group-hover:scale-105 object-cover"
+                style={{ width: '100%', height: 'auto' }}
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                priority={false}
               />
             </div>
           </Link>
