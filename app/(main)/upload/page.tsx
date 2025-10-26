@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { UploadZone } from "@/components/upload-zone"
@@ -23,11 +23,7 @@ export default function UploadPage() {
   const { toast } = useToast()
   const supabase = createClient()
 
-  useEffect(() => {
-    fetchEvents()
-  }, [])
-
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     const { data, error } = await supabase
       .from("events")
       .select("*")
@@ -36,7 +32,11 @@ export default function UploadPage() {
     if (data && !error) {
       setEvents(data)
     }
-  }
+  }, [supabase])
+
+  useEffect(() => {
+    fetchEvents()
+  }, [fetchEvents])
 
   const handleFilesSelected = (selectedFiles: File[]) => {
     setFiles(selectedFiles)
