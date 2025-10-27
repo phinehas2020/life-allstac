@@ -115,7 +115,9 @@ export default function UploadPage() {
           .filter(e => selectedEvents.includes(e.id))
           .map(e => e.name)
         
-        const allTags = [...new Set([...tagsArray, ...eventNames])]
+        // Combine tags and remove duplicates
+        const combinedTags = tagsArray.concat(eventNames)
+        const allTags = Array.from(new Set(combinedTags))
 
         // Create post record
         const { data: postData, error: postError } = await supabase
