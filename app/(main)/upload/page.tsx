@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { UploadZone } from "@/components/upload-zone"
 import { Button } from "@/components/ui/button"
@@ -20,6 +20,7 @@ export default function UploadPage() {
   const [events, setEvents] = useState<Event[]>([])
   const [uploading, setUploading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { toast } = useToast()
   const supabase = createClient()
 
@@ -31,8 +32,14 @@ export default function UploadPage() {
 
     if (data && !error) {
       setEvents(data)
+      
+      // Pre-select event from URL parameter
+      const preSelectedEventId = searchParams.get("event")
+      if (preSelectedEventId && data.some(e => e.id === preSelectedEventId)) {
+        setSelectedEvents([preSelectedEventId])
+      }
     }
-  }, [supabase])
+  }, [supabase, searchParams])
 
   useEffect(() => {
     fetchEvents()
@@ -97,11 +104,18 @@ export default function UploadPage() {
         // Determine file type
         const type = file.type.startsWith("video/") ? "video" : "image"
 
-        // Process tags
+        // Process tags and add event names as tags
         const tagsArray = tags
           .split(",")
           .map((tag) => tag.trim())
           .filter((tag) => tag.length > 0)
+        
+        // Add event names as tags automatically
+        const eventNames = events
+          .filter(e => selectedEvents.includes(e.id))
+          .map(e => e.name)
+        
+        const allTags = [...new Set([...tagsArray, ...eventNames])]
 
         // Create post record
         const { data: postData, error: postError } = await supabase
@@ -111,8 +125,8 @@ export default function UploadPage() {
             media_url: publicUrl,
             type,
             caption,
-            tags: tagsArray,
-          })
+            tags: allTags,
+          } as any)
           .select()
           .single()
 
@@ -123,13 +137,13 @@ export default function UploadPage() {
         // Associate with events if any selected
         if (selectedEvents.length > 0 && postData) {
           const eventAssociations = selectedEvents.map((eventId) => ({
-            post_id: postData.id,
+            post_id: (postData as any).id,
             event_id: eventId,
           }))
 
           const { error: eventError } = await supabase
             .from("post_events")
-            .insert(eventAssociations)
+            .insert(eventAssociations as any)
 
           if (eventError) {
             console.error("Error associating with events:", eventError)
@@ -198,6 +212,9 @@ export default function UploadPage() {
                   onChange={(e) => setTags(e.target.value)}
                   disabled={uploading}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Note: Event names will be automatically added as tags
+                </p>
               </div>
 
               {events.length > 0 && (
