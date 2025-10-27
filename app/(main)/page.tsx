@@ -47,7 +47,7 @@ export default function HomePage() {
           user:users!posts_user_id_fkey(id, username, avatar_url),
           likes(user_id),
           comments(id),
-          post_events!inner(
+          post_events(
             event:events(id, name, slug)
           )
         `)
@@ -60,7 +60,7 @@ export default function HomePage() {
       }
 
       if (data) {
-        const formattedPosts: PostWithUser[] = data.map((post) => ({
+        const formattedPosts: PostWithUser[] = data.map((post: any) => ({
           ...post,
           user: post.user,
           likes: post.likes || [],
@@ -107,7 +107,7 @@ export default function HomePage() {
         return
       }
 
-      const followingIds = following.map((f) => f.following_id)
+      const followingIds = following.map((f: any) => f.following_id)
 
       const { data, error } = await supabase
         .from("posts")
@@ -116,7 +116,7 @@ export default function HomePage() {
           user:users!posts_user_id_fkey(id, username, avatar_url),
           likes(user_id),
           comments(id),
-          post_events!inner(
+          post_events(
             event:events(id, name, slug)
           )
         `)
@@ -130,7 +130,7 @@ export default function HomePage() {
       }
 
       if (data) {
-        const formattedPosts: PostWithUser[] = data.map((post) => ({
+        const formattedPosts: PostWithUser[] = data.map((post: any) => ({
           ...post,
           user: post.user,
           likes: post.likes || [],
