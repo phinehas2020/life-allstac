@@ -98,14 +98,14 @@ export default function EventsPage() {
       
       const { data, error } = await supabase
         .from("events")
-        .insert({
+        .insert([{
           name: formData.name,
           slug,
           description: formData.description,
           start_date: formData.start_date || null,
           end_date: formData.end_date || null,
           created_by: currentUser.id,
-        })
+        }] as any)
         .select()
         .single()
 
