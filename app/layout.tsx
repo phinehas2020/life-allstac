@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Life.Allstac - Community Photo Sharing",
+  title: "Life. - Community Photo Sharing",
   description: "Share your moments with the community",
 }
 

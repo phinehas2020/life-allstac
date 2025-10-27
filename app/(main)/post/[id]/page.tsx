@@ -220,7 +220,7 @@ export default function PostPage() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Check out this post on Life.Allstac",
+          title: "Check out this post on Life.",
           text: post?.caption || "Amazing content from our community",
           url,
         })
