@@ -30,7 +30,7 @@ export default function PhotographersAdminPage() {
         .from("users")
         .select("is_admin")
         .eq("id", user.id)
-        .single()
+        .maybeSingle<Pick<User, "is_admin">>()
       
       if (data?.is_admin) {
         setIsAdmin(true)
