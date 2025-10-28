@@ -42,12 +42,12 @@ export async function GET(request: NextRequest) {
   let followedEventIds = new Set<string>()
 
   if (currentUser) {
-    const { data: followedRows } = await supabase
+    const { data: followedRows } = await (supabase as any)
       .from("event_follows")
       .select("event_id")
       .eq("user_id", currentUser.id)
 
-    followedEventIds = new Set((followedRows ?? []).map((row) => row.event_id))
+    followedEventIds = new Set((followedRows ?? []).map((row: any) => row.event_id))
   }
 
   const payload: MobileEventsResponse = {

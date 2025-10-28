@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const { data: followingRows, error: followingError } = await supabase
+    const { data: followingRows, error: followingError } = await (supabase as any)
       .from("follows")
       .select("following_id")
       .eq("follower_id", currentUser.id)
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const followingIds = (followingRows ?? []).map((row) => row.following_id)
+    const followingIds = (followingRows ?? []).map((row: any) => row.following_id)
 
     if (followingIds.length === 0) {
       const emptyPayload: MobileFeedResponse = {
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const { data: eventData, error: eventError } = await supabase
+    const { data: eventData, error: eventError } = await (supabase as any)
       .from("events")
       .select("*")
       .eq("slug", eventSlug)
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const { data: userRecord, error: userError } = await supabase
+    const { data: userRecord, error: userError } = await (supabase as any)
       .from("users")
       .select("id")
       .eq("username", username)

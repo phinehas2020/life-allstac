@@ -15,7 +15,7 @@ export async function GET(
   const currentUser = await getUserFromRequest(supabase, request)
   const postId = params.id
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from("posts")
     .select(POST_SELECTION)
     .eq("id", postId)

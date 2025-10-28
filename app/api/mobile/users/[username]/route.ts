@@ -13,7 +13,7 @@ export async function GET(
   const currentUser = await getUserFromRequest(supabase, request)
   const username = params.username
 
-  const { data: userRecord, error: userError } = await supabase
+  const { data: userRecord, error: userError } = await (supabase as any)
     .from("users")
     .select("*")
     .eq("username", username)
@@ -40,15 +40,15 @@ export async function GET(
     followersCountResponse,
     followingCountResponse,
   ] = await Promise.all([
-    supabase
+    (supabase as any)
       .from("posts")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userRecord.id),
-    supabase
+    (supabase as any)
       .from("follows")
       .select("id", { count: "exact", head: true })
       .eq("following_id", userRecord.id),
-    supabase
+    (supabase as any)
       .from("follows")
       .select("id", { count: "exact", head: true })
       .eq("follower_id", userRecord.id),
@@ -61,7 +61,7 @@ export async function GET(
   let isFollowing = false
 
   if (currentUser && !isCurrentUser) {
-    const { data: followData } = await supabase
+    const { data: followData } = await (supabase as any)
       .from("follows")
       .select("id")
       .eq("follower_id", currentUser.id)
@@ -71,7 +71,7 @@ export async function GET(
     isFollowing = Boolean(followData)
   }
 
-  const { data: recentPostsData, error: postsError } = await supabase
+  const { data: recentPostsData, error: postsError } = await (supabase as any)
     .from("posts")
     .select(POST_SELECTION)
     .eq("user_id", userRecord.id)
