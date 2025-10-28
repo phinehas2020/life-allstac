@@ -53,7 +53,7 @@ export default function SettingsPage() {
         return
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("users")
         .select("username, bio, avatar_url, email")
         .eq("id", user.id)
