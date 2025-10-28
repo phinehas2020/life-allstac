@@ -118,7 +118,7 @@ export function NavBar() {
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
               <>
-                <Link href={`/profile/${user.id}`}>
+                <Link href={`/profile/${userData?.username || user.id}`}>
                   <Button variant="ghost" size="icon">
                     <User className="w-5 h-5" />
                   </Button>
@@ -207,7 +207,7 @@ export function NavBar() {
             {user ? (
               <>
                 <Link
-                  href={`/profile/${user.id}`}
+                  href={`/profile/${userData?.username || user.id}`}
                   className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100"
                   onClick={() => setMobileMenuOpen(false)}
                 >
