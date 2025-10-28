@@ -25,7 +25,7 @@ export default function UploadPage() {
   const supabase = createClient()
 
   const fetchEvents = useCallback(async () => {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("events")
       .select("*")
       .order("created_at", { ascending: false })
@@ -35,7 +35,7 @@ export default function UploadPage() {
       
       // Pre-select event from URL parameter
       const preSelectedEventId = searchParams.get("event")
-      if (preSelectedEventId && data.some(e => e.id === preSelectedEventId)) {
+      if (preSelectedEventId && data.some((e: any) => e.id === preSelectedEventId)) {
         setSelectedEvents([preSelectedEventId])
       }
     }
