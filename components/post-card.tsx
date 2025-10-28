@@ -337,7 +337,7 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
                   </DialogHeader>
                   <PhotoRating
                     postId={post.id}
-                    photographerId={currentUserId}
+                    photographerId={currentUserId!}
                     photographerInfluence={photographerInfluence}
                     postCreatedAt={post.created_at}
                     existingRating={existingRating}
