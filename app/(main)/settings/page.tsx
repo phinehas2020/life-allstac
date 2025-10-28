@@ -118,16 +118,14 @@ export default function SettingsPage() {
       return
     }
 
-    const updates = {
-      username: form.username.trim(),
-      bio: form.bio.trim() || null,
-      avatar_url: form.avatarUrl.trim() || null,
-      updated_at: new Date().toISOString(),
-    }
-
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("users")
-      .update(updates)
+      .update({
+        username: form.username.trim(),
+        bio: form.bio.trim() || null,
+        avatar_url: form.avatarUrl.trim() || null,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", user.id)
 
     if (error) {
