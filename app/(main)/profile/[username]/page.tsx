@@ -10,7 +10,7 @@ import { MediaGallery } from "@/components/media-gallery"
 import { UserPlus, UserMinus, Settings, Camera, Clock } from "lucide-react"
 import { useToast } from "@/lib/hooks/use-toast"
 import { PhotographerBadge } from "@/components/photographer-badge"
-import type { User, PostWithUser } from "@/lib/types/database"
+import type { Database, User, PostWithUser } from "@/lib/types/database"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 
 export default function ProfilePage() {
@@ -45,7 +45,7 @@ export default function ProfilePage() {
         .from("users")
         .select("*")
         .or(`username.eq.${username},id.eq.${username}`)
-        .single()
+        .maybeSingle<User>()
 
       if (userError || !userData) {
         console.error("Error fetching user:", userError)
@@ -71,7 +71,7 @@ export default function ProfilePage() {
         .order("created_at", { ascending: false })
 
       if (postsData) {
-        const formattedPosts: PostWithUser[] = postsData.map((post: any) => ({
+        const formattedPosts: PostWithUser[] = (postsData as any[]).map((post: any) => ({
           ...post,
           user: post.user,
           likes: post.likes || [],
@@ -93,7 +93,7 @@ export default function ProfilePage() {
           .select("*")
           .eq("follower_id", currentUser.id)
           .eq("following_id", userData.id)
-          .single()
+          .maybeSingle<Database["public"]["Tables"]["follows"]["Row"]>()
 
         setIsFollowing(!!followData)
       }
