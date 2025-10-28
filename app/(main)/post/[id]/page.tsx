@@ -13,7 +13,7 @@ import { formatDistanceToNow } from "date-fns"
 import { useToast } from "@/lib/hooks/use-toast"
 import { PhotoRating } from "@/components/photo-rating"
 import { PhotographerBadge } from "@/components/photographer-badge"
-import type { PostWithUser, CommentWithUser, User } from "@/lib/types/database"
+import type { Database, PostWithUser, CommentWithUser, User } from "@/lib/types/database"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 
 export default function PostPage() {
@@ -49,7 +49,7 @@ export default function PostPage() {
         .from("users")
         .select("*")
         .eq("id", user.id)
-        .single()
+        .maybeSingle<User>()
       
       if (data) {
         setCurrentUserData(data)
@@ -66,7 +66,7 @@ export default function PostPage() {
       .select("rating")
       .eq("user_id", user.id)
       .eq("post_id", postId)
-      .single()
+      .maybeSingle<{ rating: number }>()
 
     if (data) {
       setExistingRating(data.rating)
@@ -86,7 +86,7 @@ export default function PostPage() {
           )
         `)
         .eq("id", postId)
-        .single()
+        .maybeSingle<any>()
 
       if (error) {
         console.error("Error fetching post:", error)
@@ -191,7 +191,7 @@ export default function PostPage() {
           *,
           user:users!comments_user_id_fkey(id, username, avatar_url)
         `)
-        .single()
+        .maybeSingle<CommentWithUser>()
 
       if (error) {
         toast({
