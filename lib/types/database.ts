@@ -44,6 +44,7 @@ export interface Database {
           bio?: string | null
           is_admin?: boolean
           photographer_status?: 'pending' | 'approved' | 'denied' | null
+          photographer_applied_at?: string | null
           photographer_approved_at?: string | null
           updated_at?: string
         }
