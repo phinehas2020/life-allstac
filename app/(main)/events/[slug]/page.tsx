@@ -45,7 +45,7 @@ export default function EventDetailPage() {
         .from("events")
         .select("*")
         .eq("slug", slug)
-        .single()
+        .maybeSingle<Event>()
 
       if (eventError || !eventData) {
         console.error("Error fetching event:", eventError)
@@ -69,7 +69,7 @@ export default function EventDetailPage() {
         .order("created_at", { ascending: false })
 
       if (postsData) {
-        const formattedPosts: PostWithUser[] = postsData.map((post: any) => ({
+        const formattedPosts: PostWithUser[] = (postsData as PostWithUser[]).map((post) => ({
           ...post,
           user: post.user,
           likes: post.likes || [],
