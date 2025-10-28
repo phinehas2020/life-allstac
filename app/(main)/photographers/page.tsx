@@ -57,6 +57,7 @@ export default function PhotographersLeaderboard() {
         </p>
       </div>
 
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <Card>
           <CardContent className="p-6">
@@ -105,6 +106,7 @@ export default function PhotographersLeaderboard() {
         </Card>
       </div>
 
+      {/* Leaderboard */}
       <Card>
         <CardHeader>
           <CardTitle>Rankings</CardTitle>
@@ -177,6 +179,7 @@ export default function PhotographersLeaderboard() {
         </CardContent>
       </Card>
 
+      {/* How It Works */}
       <Card className="mt-8">
         <CardHeader>
           <CardTitle>How Photographer Influence Works</CardTitle>

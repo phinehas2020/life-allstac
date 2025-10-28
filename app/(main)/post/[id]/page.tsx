@@ -8,10 +8,12 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
-import { Heart, MessageCircle, Download, Share2, Send, ArrowLeft } from "lucide-react"
+import { Heart, MessageCircle, Download, Share2, Send, ArrowLeft, Star } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { useToast } from "@/lib/hooks/use-toast"
-import type { PostWithUser, CommentWithUser } from "@/lib/types/database"
+import { PhotoRating } from "@/components/photo-rating"
+import { PhotographerBadge } from "@/components/photographer-badge"
+import type { PostWithUser, CommentWithUser, User } from "@/lib/types/database"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 
 export default function PostPage() {
@@ -21,6 +23,8 @@ export default function PostPage() {
   const [comments, setComments] = useState<CommentWithUser[]>([])
   const [newComment, setNewComment] = useState("")
   const [currentUser, setCurrentUser] = useState<SupabaseUser | null>(null)
+  const [currentUserData, setCurrentUserData] = useState<User | null>(null)
+  const [existingRating, setExistingRating] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
@@ -33,11 +37,40 @@ export default function PostPage() {
     getCurrentUser()
     fetchPost()
     fetchComments()
+    checkExistingRating()
   }, [postId])
 
   const getCurrentUser = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     setCurrentUser(user)
+    
+    if (user) {
+      const { data } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", user.id)
+        .single()
+      
+      if (data) {
+        setCurrentUserData(data)
+      }
+    }
+  }
+
+  const checkExistingRating = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data } = await supabase
+      .from("photo_ratings")
+      .select("rating")
+      .eq("user_id", user.id)
+      .eq("post_id", postId)
+      .single()
+
+    if (data) {
+      setExistingRating(data.rating)
+    }
   }
 
   const fetchPost = async () => {
@@ -220,7 +253,7 @@ export default function PostPage() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Check out this post on Life.",
+          title: "Check out this post on Life.Allstac",
           text: post?.caption || "Amazing content from our community",
           url,
         })
@@ -380,6 +413,34 @@ export default function PostPage() {
                 ))}
               </div>
             </div>
+          )}
+
+          {/* Quality Score */}
+          {post.quality_score && post.rating_count > 0 && (
+            <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-lg p-4">
+              <div className="flex items-center space-x-2 mb-1">
+                <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+                <span className="font-semibold">Quality Score: {post.quality_score.toFixed(1)}/5.0</span>
+              </div>
+              <p className="text-xs text-gray-600">
+                Rated by {post.rating_count} photographer{post.rating_count !== 1 ? 's' : ''}
+              </p>
+            </div>
+          )}
+
+          {/* Photographer Rating Interface */}
+          {currentUserData?.photographer_status === "approved" && currentUser?.id !== post.user_id && (
+            <PhotoRating
+              postId={postId}
+              photographerId={currentUser!.id}
+              photographerInfluence={currentUserData.photographer_influence}
+              postCreatedAt={post.created_at}
+              existingRating={existingRating || undefined}
+              onRatingSubmitted={() => {
+                fetchPost()
+                checkExistingRating()
+              }}
+            />
           )}
 
           {/* Comments Section */}

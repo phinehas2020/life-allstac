@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, Suspense } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { UploadZone } from "@/components/upload-zone"
@@ -12,7 +12,7 @@ import { useToast } from "@/lib/hooks/use-toast"
 import { Loader2 } from "lucide-react"
 import type { Event } from "@/lib/types/database"
 
-function UploadContent() {
+export default function UploadPage() {
   const [files, setFiles] = useState<File[]>([])
   const [caption, setCaption] = useState("")
   const [tags, setTags] = useState("")
@@ -110,14 +110,12 @@ function UploadContent() {
           .map((tag) => tag.trim())
           .filter((tag) => tag.length > 0)
         
-        // Add event names as tags automatically
+        // Add event names as tags
         const eventNames = events
           .filter(e => selectedEvents.includes(e.id))
           .map(e => e.name)
         
-        // Combine tags and remove duplicates
-        const combinedTags = tagsArray.concat(eventNames)
-        const allTags = Array.from(new Set(combinedTags))
+        const allTags = [...new Set([...tagsArray, ...eventNames])]
 
         // Create post record
         const { data: postData, error: postError } = await supabase
@@ -214,9 +212,6 @@ function UploadContent() {
                   onChange={(e) => setTags(e.target.value)}
                   disabled={uploading}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Note: Event names will be automatically added as tags
-                </p>
               </div>
 
               {events.length > 0 && (
@@ -262,13 +257,5 @@ function UploadContent() {
         </CardContent>
       </Card>
     </div>
-  )
-}
-
-export default function UploadPage() {
-  return (
-    <Suspense fallback={<div className="max-w-4xl mx-auto p-4 py-8"><div className="animate-pulse"><div className="h-96 bg-gray-200 rounded-lg"></div></div></div>}>
-      <UploadContent />
-    </Suspense>
   )
 }

@@ -6,9 +6,10 @@ import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Heart, MessageCircle, Download, Share2, Play } from "lucide-react"
+import { Heart, MessageCircle, Download, Share2, Play, Star, Award } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { useToast } from "@/lib/hooks/use-toast"
+import { PhotographerBadge } from "@/components/photographer-badge"
 import type { PostWithUser } from "@/lib/types/database"
 
 interface PostCardProps {
@@ -52,7 +53,7 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
         // Like
         const { error } = await supabase
           .from("likes")
-          .insert({ user_id: currentUserId, post_id: post.id })
+          .insert({ user_id: currentUserId, post_id: post.id } as any)
 
         if (!error) {
           setIsLiked(true)
@@ -74,7 +75,7 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
       // Record download
       await supabase
         .from("downloads")
-        .insert({ post_id: post.id, user_id: currentUserId })
+        .insert({ post_id: post.id, user_id: currentUserId } as any)
 
       // Download file
       const response = await fetch(post.media_url)
@@ -155,6 +156,12 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 priority={false}
               />
+              {post.quality_score && post.quality_score >= 4.0 && (
+                <div className="absolute top-2 left-2 bg-amber-500 text-white px-2 py-1 rounded-lg flex items-center space-x-1 shadow-lg">
+                  <Award className="w-3 h-3" />
+                  <span className="text-xs font-semibold">High Quality</span>
+                </div>
+              )}
             </div>
           </Link>
         )}
@@ -162,7 +169,7 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
 
       <div className="p-4 space-y-3">
         {/* User info */}
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center justify-between">
           <Link
             href={`/profile/${post.user?.username || post.user_id}`}
             className="flex items-center space-x-2 hover:opacity-80"
@@ -170,13 +177,26 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white font-semibold text-sm">
               {post.user?.username?.[0]?.toUpperCase() || "U"}
             </div>
-            <span className="font-medium text-sm">
-              {post.user?.username || "Unknown User"}
-            </span>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="font-medium text-sm">
+                  {post.user?.username || "Unknown User"}
+                </span>
+                {post.user?.photographer_status === "approved" && (
+                  <PhotographerBadge influence={post.user.photographer_influence} />
+                )}
+              </div>
+              <span className="text-xs text-gray-500">
+                {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+              </span>
+            </div>
           </Link>
-          <span className="text-xs text-gray-500">
-            {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-          </span>
+          {post.quality_score && post.quality_score >= 4.0 && (
+            <div className="flex items-center space-x-1 text-amber-600">
+              <Star className="w-4 h-4 fill-amber-500" />
+              <span className="text-xs font-semibold">{post.quality_score.toFixed(1)}</span>
+            </div>
+          )}
         </div>
 
         {/* Caption */}

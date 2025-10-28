@@ -39,8 +39,10 @@ export function PhotoRating({
   const { toast } = useToast()
   const supabase = createClient()
 
+  // Calculate hours since post creation
   const hoursSincePost = (Date.now() - new Date(postCreatedAt).getTime()) / (1000 * 60 * 60)
   
+  // Calculate time bonus
   let timeBonus = "0.2x"
   let timeMessage = "Late rating"
   if (hoursSincePost <= 2) {
@@ -68,6 +70,7 @@ export function PhotoRating({
       }
 
       if (existingRating) {
+        // Update existing rating
         const { error } = await supabase
           .from("photo_ratings")
           .update({
@@ -86,6 +89,7 @@ export function PhotoRating({
           return
         }
       } else {
+        // Create new rating
         const { error } = await supabase
           .from("photo_ratings")
           .insert({
@@ -133,6 +137,7 @@ export function PhotoRating({
           </p>
         </div>
 
+        {/* Star Rating */}
         <div className="flex items-center space-x-1">
           {[1, 2, 3, 4, 5].map((rating) => (
             <button
@@ -155,6 +160,7 @@ export function PhotoRating({
           ))}
         </div>
 
+        {/* Rating Label */}
         {currentRating > 0 && (
           <div className="bg-gray-50 p-3 rounded-lg">
             <p className="font-medium text-sm">{RATING_LABELS[currentRating].label}</p>
@@ -164,6 +170,7 @@ export function PhotoRating({
           </div>
         )}
 
+        {/* Time Warning */}
         {hoursSincePost > 24 && hoursSincePost <= 168 && (
           <div className="flex items-center space-x-2 text-xs text-amber-600 bg-amber-50 p-2 rounded">
             <Clock className="w-3 h-3" />
@@ -171,6 +178,7 @@ export function PhotoRating({
           </div>
         )}
 
+        {/* Submit Button */}
         <Button
           onClick={handleSubmit}
           disabled={selectedRating === 0 || submitting}

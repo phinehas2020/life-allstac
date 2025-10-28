@@ -44,13 +44,14 @@ export default function HomePage() {
         .from("posts")
         .select(`
           *,
-          user:users!posts_user_id_fkey(id, username, avatar_url),
+          user:users!posts_user_id_fkey(id, username, avatar_url, photographer_status, photographer_influence),
           likes(user_id),
           comments(id),
           post_events(
             event:events(id, name, slug)
           )
         `)
+        .order("quality_score", { ascending: false, nullsLast: true })
         .order("created_at", { ascending: false })
         .range(currentPage * 20, (currentPage + 1) * 20 - 1)
 
@@ -113,7 +114,7 @@ export default function HomePage() {
         .from("posts")
         .select(`
           *,
-          user:users!posts_user_id_fkey(id, username, avatar_url),
+          user:users!posts_user_id_fkey(id, username, avatar_url, photographer_status, photographer_influence),
           likes(user_id),
           comments(id),
           post_events(
@@ -121,6 +122,7 @@ export default function HomePage() {
           )
         `)
         .in("user_id", followingIds)
+        .order("quality_score", { ascending: false, nullsLast: true })
         .order("created_at", { ascending: false })
         .range(currentPage * 20, (currentPage + 1) * 20 - 1)
 
@@ -169,7 +171,7 @@ export default function HomePage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Welcome to Life.</h1>
+        <h1 className="text-3xl font-bold mb-2">Welcome to Life.Allstac</h1>
         <p className="text-gray-600">
           Share and discover moments from our community
         </p>

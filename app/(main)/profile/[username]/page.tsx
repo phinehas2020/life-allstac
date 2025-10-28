@@ -7,8 +7,9 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { MediaGallery } from "@/components/media-gallery"
-import { UserPlus, UserMinus, Settings } from "lucide-react"
+import { UserPlus, UserMinus, Settings, Camera, Clock } from "lucide-react"
 import { useToast } from "@/lib/hooks/use-toast"
+import { PhotographerBadge } from "@/components/photographer-badge"
 import type { User, PostWithUser } from "@/lib/types/database"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 
@@ -58,7 +59,7 @@ export default function ProfilePage() {
         .from("posts")
         .select(`
           *,
-          user:users!posts_user_id_fkey(id, username, avatar_url),
+          user:users!posts_user_id_fkey(id, username, avatar_url, photographer_status, photographer_influence),
           likes(user_id),
           comments(id),
           post_events(
@@ -66,6 +67,7 @@ export default function ProfilePage() {
           )
         `)
         .eq("user_id", userData.id)
+        .order("quality_score", { ascending: false, nullsLast: true })
         .order("created_at", { ascending: false })
 
       if (postsData) {
@@ -153,6 +155,32 @@ export default function ProfilePage() {
     }
   }
 
+  const handleApplyPhotographer = async () => {
+    const { error } = await supabase
+      .from("users")
+      .update({
+        photographer_status: "pending",
+        photographer_applied_at: new Date().toISOString(),
+      } as any)
+      .eq("id", user!.id)
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit application",
+        variant: "destructive",
+      })
+      return
+    }
+
+    toast({
+      title: "Application Submitted",
+      description: "Your photographer application has been submitted for review",
+    })
+
+    fetchUser()
+  }
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -192,7 +220,15 @@ export default function ProfilePage() {
                 {user.username?.[0]?.toUpperCase() || "U"}
               </div>
               <div>
-                <h1 className="text-2xl font-bold mb-1">{user.username}</h1>
+                <div className="flex items-center space-x-3 mb-2">
+                  <h1 className="text-2xl font-bold">{user.username}</h1>
+                  {user.photographer_status === "approved" && (
+                    <PhotographerBadge
+                      influence={user.photographer_influence}
+                      accuracy={user.photographer_accuracy_percentage}
+                    />
+                  )}
+                </div>
                 {user.bio && <p className="text-gray-600 mb-3">{user.bio}</p>}
                 <div className="flex items-center space-x-6 text-sm">
                   <div>
@@ -205,17 +241,47 @@ export default function ProfilePage() {
                     <span className="font-bold">{followingCount}</span> following
                   </div>
                 </div>
+                {user.photographer_status === "approved" && user.photographer_total_ratings > 0 && (
+                  <div className="mt-2 text-xs text-gray-600">
+                    {user.photographer_total_ratings} ratings • {user.photographer_accuracy_percentage.toFixed(0)}% accuracy
+                  </div>
+                )}
               </div>
             </div>
 
-            <div>
+            <div className="space-y-2">
               {isOwnProfile ? (
-                <Link href="/settings">
-                  <Button variant="outline">
-                    <Settings className="w-4 h-4 mr-2" />
-                    Edit Profile
-                  </Button>
-                </Link>
+                <>
+                  <Link href="/settings">
+                    <Button variant="outline" className="w-full md:w-auto">
+                      <Settings className="w-4 h-4 mr-2" />
+                      Edit Profile
+                    </Button>
+                  </Link>
+                  {!user.photographer_status && (
+                    <Button 
+                      onClick={handleApplyPhotographer}
+                      variant="default"
+                      className="w-full md:w-auto"
+                    >
+                      <Camera className="w-4 h-4 mr-2" />
+                      Apply to Rate Photos
+                    </Button>
+                  )}
+                  {user.photographer_status === "pending" && (
+                    <div className="flex items-center space-x-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-lg text-sm">
+                      <Clock className="w-4 h-4 text-amber-600" />
+                      <span className="text-amber-700">Application Pending</span>
+                    </div>
+                  )}
+                  {user.photographer_status === "approved" && (
+                    <PhotographerBadge
+                      influence={user.photographer_influence}
+                      accuracy={user.photographer_accuracy_percentage}
+                      showStats
+                    />
+                  )}
+                </>
               ) : currentUser ? (
                 <Button onClick={handleFollow} variant={isFollowing ? "outline" : "default"}>
                   {isFollowing ? (

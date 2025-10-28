@@ -46,13 +46,14 @@ export default function ExplorePage() {
         .from("posts")
         .select(`
           *,
-          user:users!posts_user_id_fkey(id, username, avatar_url),
+          user:users!posts_user_id_fkey(id, username, avatar_url, photographer_status, photographer_influence),
           likes(user_id),
           comments(id),
           post_events(
             event:events(id, name, slug)
           )
         `)
+        .order("quality_score", { ascending: false, nullsLast: true })
         .order("created_at", { ascending: false })
         .range(currentPage * 20, (currentPage + 1) * 20 - 1)
 
@@ -99,7 +100,7 @@ export default function ExplorePage() {
         .from("posts")
         .select(`
           *,
-          user:users!posts_user_id_fkey(id, username, avatar_url),
+          user:users!posts_user_id_fkey(id, username, avatar_url, photographer_status, photographer_influence),
           likes(user_id),
           comments(id),
           post_events(
@@ -107,6 +108,7 @@ export default function ExplorePage() {
           )
         `)
         .or(`caption.ilike.%${searchQuery}%,tags.cs.{${searchQuery}}`)
+        .order("quality_score", { ascending: false, nullsLast: true })
         .order("created_at", { ascending: false })
         .range(currentPage * 20, (currentPage + 1) * 20 - 1)
 

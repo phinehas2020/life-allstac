@@ -1,5 +1,5 @@
 -- Migration: Add Photographer Rating System
--- Run this in your Supabase SQL Editor AFTER the main schema
+-- Combines time-weighted and predictive accuracy approaches
 
 -- Add photographer fields to users table
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS photographer_status TEXT CHECK (photographer_status IN ('pending', 'approved', 'denied')) DEFAULT NULL;
@@ -17,10 +17,10 @@ CREATE TABLE IF NOT EXISTS public.photo_ratings (
     post_id UUID NOT NULL REFERENCES public.posts(id) ON DELETE CASCADE,
     rating INTEGER CHECK (rating BETWEEN 1 AND 5) NOT NULL,
     rating_label TEXT CHECK (rating_label IN ('low_quality', 'standard', 'good', 'high_quality', 'exceptional')) NOT NULL,
-    time_to_rate_hours DECIMAL(10,2),
-    influence_at_rating DECIMAL(4,2) DEFAULT 1.0,
-    was_accurate BOOLEAN DEFAULT NULL,
-    accuracy_bonus DECIMAL(3,2) DEFAULT 0.0,
+    time_to_rate_hours DECIMAL(10,2), -- How long after post creation was this rated
+    influence_at_rating DECIMAL(4,2) DEFAULT 1.0, -- Photographer's influence when they rated
+    was_accurate BOOLEAN DEFAULT NULL, -- Determined after 7 days
+    accuracy_bonus DECIMAL(3,2) DEFAULT 0.0, -- Bonus earned from this rating
     created_at TIMESTAMPTZ DEFAULT NOW(),
     evaluated_at TIMESTAMPTZ DEFAULT NULL,
     UNIQUE(user_id, post_id)
@@ -65,7 +65,7 @@ CREATE POLICY "Photographers can delete own unprocessed ratings" ON public.photo
         was_accurate IS NULL
     );
 
--- Function to calculate quality score
+-- Function to calculate quality score when a rating is added
 CREATE OR REPLACE FUNCTION calculate_post_quality_score(post_uuid UUID)
 RETURNS DECIMAL AS $$
 DECLARE
@@ -73,6 +73,7 @@ DECLARE
     total_influence DECIMAL(10,2);
     final_score DECIMAL(5,2);
 BEGIN
+    -- Calculate weighted average based on photographer influence
     SELECT 
         COALESCE(SUM(rating * influence_at_rating), 0),
         COALESCE(SUM(influence_at_rating), 0)
@@ -86,6 +87,7 @@ BEGIN
         final_score := NULL;
     END IF;
     
+    -- Update post with quality score
     UPDATE public.posts
     SET 
         quality_score = final_score,
@@ -97,7 +99,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Trigger to recalculate quality score
+-- Trigger to recalculate quality score when rating added/updated
 CREATE OR REPLACE FUNCTION update_quality_score_on_rating()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -106,13 +108,102 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS on_rating_change ON public.photo_ratings;
 CREATE TRIGGER on_rating_change
     AFTER INSERT OR UPDATE ON public.photo_ratings
     FOR EACH ROW
     EXECUTE FUNCTION update_quality_score_on_rating();
 
--- Function to set time metadata when rating
+-- Function to evaluate rating accuracy after 7 days
+CREATE OR REPLACE FUNCTION evaluate_rating_accuracy()
+RETURNS void AS $$
+DECLARE
+    rating_record RECORD;
+    post_likes INTEGER;
+    post_age_days DECIMAL;
+    is_accurate BOOLEAN;
+    bonus DECIMAL(3,2);
+    time_bonus DECIMAL(3,2);
+BEGIN
+    -- Find ratings that are 7+ days old and haven't been evaluated
+    FOR rating_record IN
+        SELECT pr.*, p.created_at as post_created_at
+        FROM public.photo_ratings pr
+        JOIN public.posts p ON pr.post_id = p.id
+        WHERE pr.was_accurate IS NULL
+        AND p.created_at < NOW() - INTERVAL '7 days'
+    LOOP
+        -- Get current like count for the post
+        SELECT COUNT(*) INTO post_likes
+        FROM public.likes
+        WHERE post_id = rating_record.post_id;
+        
+        -- Determine if rating was accurate based on like count
+        is_accurate := FALSE;
+        
+        IF rating_record.rating = 5 AND post_likes >= 50 THEN
+            is_accurate := TRUE;
+        ELSIF rating_record.rating = 4 AND post_likes >= 30 AND post_likes < 70 THEN
+            is_accurate := TRUE;
+        ELSIF rating_record.rating = 3 AND post_likes >= 10 AND post_likes < 40 THEN
+            is_accurate := TRUE;
+        ELSIF rating_record.rating = 2 AND post_likes >= 3 AND post_likes < 15 THEN
+            is_accurate := TRUE;
+        ELSIF rating_record.rating = 1 AND post_likes < 5 THEN
+            is_accurate := TRUE;
+        END IF;
+        
+        -- Calculate time-weighted bonus
+        IF rating_record.time_to_rate_hours <= 2 THEN
+            time_bonus := 0.15; -- Rated within 2 hours
+        ELSIF rating_record.time_to_rate_hours <= 24 THEN
+            time_bonus := 0.10; -- Rated within 24 hours
+        ELSIF rating_record.time_to_rate_hours <= 72 THEN
+            time_bonus := 0.05; -- Rated within 3 days
+        ELSE
+            time_bonus := 0.02; -- Late rating
+        END IF;
+        
+        -- Calculate final bonus (only if accurate)
+        IF is_accurate THEN
+            bonus := time_bonus;
+        ELSE
+            bonus := -time_bonus; -- Penalty for inaccurate ratings
+        END IF;
+        
+        -- Update the rating record
+        UPDATE public.photo_ratings
+        SET 
+            was_accurate = is_accurate,
+            accuracy_bonus = bonus,
+            evaluated_at = NOW()
+        WHERE id = rating_record.id;
+        
+        -- Update photographer's influence
+        UPDATE public.users
+        SET 
+            photographer_total_ratings = photographer_total_ratings + 1,
+            photographer_accurate_ratings = CASE 
+                WHEN is_accurate THEN photographer_accurate_ratings + 1 
+                ELSE photographer_accurate_ratings 
+            END,
+            photographer_influence = GREATEST(0.1, LEAST(5.0, photographer_influence + bonus)),
+            photographer_accuracy_percentage = (
+                CASE 
+                    WHEN photographer_total_ratings + 1 > 0 
+                    THEN (photographer_accurate_ratings::DECIMAL + CASE WHEN is_accurate THEN 1 ELSE 0 END) / (photographer_total_ratings + 1) * 100
+                    ELSE 0 
+                END
+            )
+        WHERE id = rating_record.user_id;
+        
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create a scheduled job helper (you'll need to call this via cron or Edge Function)
+COMMENT ON FUNCTION evaluate_rating_accuracy() IS 'Run this daily via cron to evaluate photographer rating accuracy and update influence scores';
+
+-- Function to calculate time to rate when rating is created
 CREATE OR REPLACE FUNCTION set_time_to_rate()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -126,7 +217,8 @@ BEGIN
     hours_diff := EXTRACT(EPOCH FROM (NOW() - post_created)) / 3600;
     NEW.time_to_rate_hours := hours_diff;
     
-    SELECT COALESCE(photographer_influence, 1.0) INTO NEW.influence_at_rating
+    -- Get photographer's current influence
+    SELECT photographer_influence INTO NEW.influence_at_rating
     FROM public.users
     WHERE id = NEW.user_id;
     
@@ -134,99 +226,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS set_rating_timing ON public.photo_ratings;
 CREATE TRIGGER set_rating_timing
     BEFORE INSERT ON public.photo_ratings
     FOR EACH ROW
     EXECUTE FUNCTION set_time_to_rate();
-
--- Function to evaluate accuracy (run daily via cron)
-CREATE OR REPLACE FUNCTION evaluate_rating_accuracy()
-RETURNS TABLE(evaluated_count INTEGER, photographers_updated INTEGER) AS $$
-DECLARE
-    rating_record RECORD;
-    post_likes INTEGER;
-    is_accurate BOOLEAN;
-    base_bonus DECIMAL(3,2);
-    time_multiplier DECIMAL(3,2);
-    final_bonus DECIMAL(3,2);
-    eval_count INTEGER := 0;
-    photo_count INTEGER := 0;
-BEGIN
-    FOR rating_record IN
-        SELECT pr.*, p.created_at as post_created_at
-        FROM public.photo_ratings pr
-        JOIN public.posts p ON pr.post_id = p.id
-        WHERE pr.was_accurate IS NULL
-        AND p.created_at < NOW() - INTERVAL '7 days'
-    LOOP
-        SELECT COUNT(*) INTO post_likes
-        FROM public.likes
-        WHERE post_id = rating_record.post_id;
-        
-        is_accurate := FALSE;
-        base_bonus := 0.10;
-        
-        -- Check accuracy based on performance
-        IF rating_record.rating = 5 AND post_likes >= 50 THEN
-            is_accurate := TRUE;
-        ELSIF rating_record.rating = 4 AND post_likes BETWEEN 30 AND 69 THEN
-            is_accurate := TRUE;
-        ELSIF rating_record.rating = 3 AND post_likes BETWEEN 10 AND 39 THEN
-            is_accurate := TRUE;
-        ELSIF rating_record.rating = 2 AND post_likes BETWEEN 3 AND 14 THEN
-            is_accurate := TRUE;
-        ELSIF rating_record.rating = 1 AND post_likes < 5 THEN
-            is_accurate := TRUE;
-        END IF;
-        
-        -- Calculate time multiplier
-        IF rating_record.time_to_rate_hours <= 2 THEN
-            time_multiplier := 1.5;
-        ELSIF rating_record.time_to_rate_hours <= 24 THEN
-            time_multiplier := 1.0;
-        ELSIF rating_record.time_to_rate_hours <= 72 THEN
-            time_multiplier := 0.5;
-        ELSE
-            time_multiplier := 0.2;
-        END IF;
-        
-        final_bonus := base_bonus * time_multiplier;
-        IF NOT is_accurate THEN
-            final_bonus := -final_bonus;
-        END IF;
-        
-        UPDATE public.photo_ratings
-        SET 
-            was_accurate = is_accurate,
-            accuracy_bonus = final_bonus,
-            evaluated_at = NOW()
-        WHERE id = rating_record.id;
-        
-        UPDATE public.users
-        SET 
-            photographer_total_ratings = photographer_total_ratings + 1,
-            photographer_accurate_ratings = CASE 
-                WHEN is_accurate THEN photographer_accurate_ratings + 1 
-                ELSE photographer_accurate_ratings 
-            END,
-            photographer_influence = GREATEST(0.1, LEAST(5.0, photographer_influence + final_bonus)),
-            photographer_accuracy_percentage = (
-                (photographer_accurate_ratings::DECIMAL + CASE WHEN is_accurate THEN 1 ELSE 0 END) / 
-                GREATEST(1, photographer_total_ratings + 1) * 100
-            )
-        WHERE id = rating_record.user_id;
-        
-        eval_count := eval_count + 1;
-    END LOOP;
-    
-    SELECT COUNT(DISTINCT user_id) INTO photo_count
-    FROM public.photo_ratings
-    WHERE evaluated_at >= NOW() - INTERVAL '1 hour';
-    
-    RETURN QUERY SELECT eval_count, photo_count;
-END;
-$$ LANGUAGE plpgsql;
 
 -- View for photographer leaderboard
 CREATE OR REPLACE VIEW photographer_leaderboard AS
@@ -245,10 +248,18 @@ SELECT
         WHEN u.photographer_influence >= 1.5 THEN 'Intermediate'
         ELSE 'Beginner'
     END as photographer_level,
-    COUNT(DISTINCT p.id) as photos_uploaded
+    COUNT(DISTINCT p.id) as photos_uploaded,
+    COALESCE(AVG(l.like_count), 0) as avg_likes_per_photo
 FROM public.users u
 LEFT JOIN public.posts p ON p.user_id = u.id
+LEFT JOIN (
+    SELECT post_id, COUNT(*) as like_count
+    FROM public.likes
+    GROUP BY post_id
+) l ON l.post_id = p.id
 WHERE u.photographer_status = 'approved'
 GROUP BY u.id, u.username, u.photographer_influence, u.photographer_accuracy_percentage, 
          u.photographer_total_ratings, u.photographer_accurate_ratings, u.photographer_approved_at
 ORDER BY u.photographer_influence DESC;
+
+COMMENT ON VIEW photographer_leaderboard IS 'Shows photographer rankings and stats for leaderboard display';

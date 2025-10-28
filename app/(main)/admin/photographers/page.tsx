@@ -44,6 +44,7 @@ export default function PhotographersAdminPage() {
   const fetchApplications = async () => {
     setLoading(true)
     try {
+      // Get pending applications
       const { data: pending } = await supabase
         .from("users")
         .select("*")
@@ -54,6 +55,7 @@ export default function PhotographersAdminPage() {
         setPendingApplicants(pending)
       }
 
+      // Get approved photographers
       const { data: approved } = await supabase
         .from("users")
         .select("*")
@@ -149,6 +151,7 @@ export default function PhotographersAdminPage() {
         </p>
       </div>
 
+      {/* Pending Applications */}
       <Card className="mb-8">
         <CardHeader>
           <CardTitle>Pending Applications ({pendingApplicants.length})</CardTitle>
@@ -208,6 +211,7 @@ export default function PhotographersAdminPage() {
         </CardContent>
       </Card>
 
+      {/* Top Photographers */}
       <Card>
         <CardHeader>
           <CardTitle>Top Photographers</CardTitle>

@@ -1,6 +1,6 @@
-# Life. - Community Photo Sharing Platform
+# Life.Allstac - Community Photo Sharing Platform
 
-A modern photo and video sharing platform for your church/community with a sophisticated photographer rating system.
+A modern photo and video sharing platform for your church/community that combines Instagram-style social features with Unsplash-like free downloads.
 
 ## Features
 
@@ -8,44 +8,13 @@ A modern photo and video sharing platform for your church/community with a sophi
 - **Photo & Video Upload**: Support for images (JPG, PNG, GIF, WebP) and videos (up to 10 seconds)
 - **Events System**: Admins can create events/categories for organized photo sharing
 - **Social Features**: Like, comment, follow users and events
-- **Photographer Rating System**: Merit-based photo quality ratings with dynamic influence weights
 - **Discovery**: Browse everything feed, following feed, and event-specific galleries
 - **Download**: Free downloads with resolution options
 - **Responsive Design**: Works beautifully on desktop and mobile devices
 
-## Photographer Rating System
-
-### How It Works
-
-Our unique time-weighted predictive accuracy system rewards photographers who can identify quality early:
-
-**Influence Scoring:**
-- All photographers start with 1.0x influence
-- Early accurate ratings earn more influence (up to 1.5x bonus)
-- Late or inaccurate ratings earn less or lose influence
-- Maximum influence: 5.0x (Master level)
-
-**Time Bonuses:**
-- Rate within 2 hours: 1.5x multiplier
-- Rate within 24 hours: 1.0x multiplier
-- Rate within 3 days: 0.5x multiplier
-- After 3 days: 0.2x multiplier
-
-**Accuracy Evaluation (after 7 days):**
-- System checks if photographer's rating matched actual community engagement
-- Accurate predictions increase influence
-- Inaccurate predictions decrease influence
-
-**Photographer Levels:**
-- Beginner: 1.0-1.49x
-- Intermediate: 1.5-1.99x
-- Advanced: 2.0-2.99x
-- Expert: 3.0-3.99x
-- Master: 4.0-5.0x
-
 ## Tech Stack
 
-- **Frontend**: Next.js 14 with App Router, React 18, TypeScript
+- **Frontend**: Next.js 14+ with App Router, React 18, TypeScript
 - **Styling**: Tailwind CSS, shadcn/ui components
 - **Backend**: Supabase (PostgreSQL, Auth, Storage)
 - **Deployment**: Vercel
@@ -61,8 +30,8 @@ Our unique time-weighted predictive accuracy system rewards photographers who ca
 ### 1. Clone and Install Dependencies
 
 ```bash
-git clone https://github.com/phinehas2020/life-allstac.git
-cd life-allstac
+git clone <your-repo-url>
+cd life.allstac
 npm install
 ```
 
@@ -71,8 +40,7 @@ npm install
 1. Create a new Supabase project at [supabase.com](https://supabase.com)
 2. Go to SQL Editor in your Supabase dashboard
 3. Run the SQL from `supabase-schema.sql` to create all tables and policies
-4. Run the SQL from `supabase-migration-photographer-system.sql` to add photographer features
-5. Go to Storage and create these buckets:
+4. Go to Storage and create these buckets:
    - `avatars` (public)
    - `posts` (public)
    - `events` (public)
@@ -82,6 +50,7 @@ npm install
 Create a `.env.local` file in the root directory:
 
 ```env
+# Get these from your Supabase project settings
 NEXT_PUBLIC_SUPABASE_URL=your-project-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
@@ -99,24 +68,16 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 1. Sign up for a new account
 2. In Supabase dashboard, go to Table Editor > users
 3. Find your user and set `is_admin` to `true`
-4. Now you can create events and approve photographers
-
-### 6. Maintain Photographer Influence (Optional)
-
-Set up a daily cron job to evaluate photographer accuracy:
-
-```sql
-SELECT * FROM evaluate_rating_accuracy();
-```
-
-This function checks ratings that are 7+ days old and updates photographer influence based on accuracy.
+4. Now you can create and manage events
 
 ## Deployment to Vercel
 
 1. Push your code to GitHub
 2. Connect your GitHub repository to Vercel
 3. Add environment variables in Vercel project settings
-4. Configure custom domain (life.allstac.com)
+4. Configure custom domain (life.allstac.com):
+   - Add domain in Vercel project settings
+   - Update DNS records with your domain provider
 
 ## Project Structure
 
@@ -125,16 +86,10 @@ life.allstac/
 ├── app/                    # Next.js app directory
 │   ├── (auth)/            # Authentication pages
 │   ├── (main)/            # Main app pages
-│   │   ├── admin/         # Admin pages
-│   │   ├── events/        # Events and event detail pages
-│   │   ├── photographers/ # Photographer leaderboard
-│   │   └── ...
 │   └── api/               # API routes
 ├── components/            # React components
 │   ├── ui/               # shadcn/ui components
-│   ├── photographer-badge.tsx
-│   ├── photo-rating.tsx
-│   └── ...
+│   └── ...               # Custom components
 ├── lib/                   # Utilities and configurations
 │   ├── supabase/         # Supabase clients
 │   ├── types/            # TypeScript types
@@ -150,27 +105,53 @@ life.allstac/
 3. Upload your own photos/videos
 4. Like, comment, and follow other users
 5. Join events to share event-specific photos
-6. Apply to become a photographer to rate photos
-
-### For Photographers
-1. Apply via your profile page
-2. Once approved, rate photos with 1-5 stars
-3. Rate early for maximum influence bonus
-4. Build your influence through accurate predictions
-5. View your stats on the leaderboard
 
 ### For Admins
 1. Create events from the Events page
-2. Approve/deny photographer applications
-3. Monitor photographer performance
-4. Manage community content
+2. Manage event details and featured status
+3. Monitor community content
+4. Delete inappropriate content
+
+## Admin Dashboard
+
+- Visit `/admin` (admin accounts only) to see platform health at a glance.
+- Metrics include total members, published posts, cumulative interactions (likes/comments/downloads), and event activity.
+- Recent activity cards surface the latest uploads, new signups, and top-performing events so you can act quickly.
+- Admin navigation also links straight to photographer approvals at `/admin/photographers`.
+
+## Mobile API for Native Clients
+
+Build native apps (Swift/iOS, Android, etc.) against a stable JSON layer without duplicating frontend logic.
+
+### Authentication & Headers
+
+- Authenticate with Supabase as usual on-device and send the access token on every request: `Authorization: Bearer <access_token>`.
+- All responses include CORS headers (`Access-Control-Allow-Origin: *`), so direct calls from simulators or devices just work.
+
+### Available Endpoints
+
+- `GET /api/mobile/posts` – Feed data with author, event, and engagement counts. Query params:
+  - `page` (default `0`) and `limit` (default `20`, max `50`)
+  - `view=everything|following|event|user`
+  - `eventSlug` / `username` when filtering by event or user
+  - `sort=quality|latest`
+- `GET /api/mobile/posts/:id` – Detailed payload for a single post.
+- `GET /api/mobile/events` – Event summaries with follower counts and whether the current user follows each one (`isFollowing`).
+- `GET /api/mobile/users/:username` – Profile info, follower/following counts, and recent posts.
+- `GET /api/mobile/metrics` – High-level totals and 7‑day deltas for users, posts, and interactions (ideal for in-app dashboards).
+
+Response schemas are described in `lib/types/api.ts` (`MobilePostPayload`, `MobileEventsResponse`, etc.) so TypeScript and Swift models stay in sync. Example request:
+
+```bash
+curl -H "Authorization: Bearer <token>" \
+     https://your-domain.com/api/mobile/posts?view=everything&limit=10
+```
 
 ## Database Schema
 
-- **users**: User profiles, authentication, and photographer data
+- **users**: User profiles and authentication
 - **events**: Community events/categories
-- **posts**: Uploaded photos and videos with quality scores
-- **photo_ratings**: Photographer ratings with influence tracking
+- **posts**: Uploaded photos and videos
 - **post_events**: Links posts to events
 - **likes**: User likes on posts
 - **comments**: Comments on posts
@@ -183,7 +164,6 @@ life.allstac/
 - Row Level Security (RLS) enabled on all tables
 - Authentication required for uploads and social features
 - Admin-only event management
-- Photographer-only rating permissions
 - Secure file storage with Supabase Storage
 
 ## Performance Optimizations
@@ -193,7 +173,19 @@ life.allstac/
 - Optimistic UI updates
 - CDN delivery via Supabase
 - Next.js image optimization
-- Quality-weighted feed algorithm
+
+## Future Enhancements
+
+- Mobile app (React Native)
+- Advanced search and filters
+- User notifications
+- Private messaging
+- Analytics dashboard
+- Content moderation tools
+
+## Support
+
+For issues or questions, please create an issue in the GitHub repository.
 
 ## License
 
