@@ -73,13 +73,15 @@ export default function PhotographersAdminPage() {
 
   const handleApprove = async (userId: string) => {
     const timestamp = new Date().toISOString()
+    const approveUpdates = {
+      photographer_status: "approved" as const,
+      photographer_approved_at: timestamp,
+      updated_at: timestamp,
+    } satisfies Database["public"]["Tables"]["users"]["Update"]
+
     const { error } = await supabase
       .from("users")
-      .update({
-        photographer_status: "approved",
-        photographer_approved_at: timestamp,
-        updated_at: timestamp,
-      } satisfies Database["public"]["Tables"]["users"]["Update"])
+      .update(approveUpdates as never)
       .eq("id", userId)
 
     if (error) {
@@ -101,12 +103,14 @@ export default function PhotographersAdminPage() {
 
   const handleDeny = async (userId: string) => {
     const timestamp = new Date().toISOString()
+    const denyUpdates = {
+      photographer_status: "denied" as const,
+      updated_at: timestamp,
+    } satisfies Database["public"]["Tables"]["users"]["Update"]
+
     const { error } = await supabase
       .from("users")
-      .update({
-        photographer_status: "denied",
-        updated_at: timestamp,
-      } satisfies Database["public"]["Tables"]["users"]["Update"])
+      .update(denyUpdates as never)
       .eq("id", userId)
 
     if (error) {
