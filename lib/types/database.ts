@@ -9,6 +9,13 @@ export interface Database {
           avatar_url: string | null
           bio: string | null
           is_admin: boolean
+          photographer_status: 'pending' | 'approved' | 'denied' | null
+          photographer_applied_at: string | null
+          photographer_approved_at: string | null
+          photographer_influence: number
+          photographer_total_ratings: number
+          photographer_accurate_ratings: number
+          photographer_accuracy_percentage: number
           created_at: string
           updated_at: string
         }
@@ -19,6 +26,13 @@ export interface Database {
           avatar_url?: string | null
           bio?: string | null
           is_admin?: boolean
+          photographer_status?: 'pending' | 'approved' | 'denied' | null
+          photographer_applied_at?: string | null
+          photographer_approved_at?: string | null
+          photographer_influence?: number
+          photographer_total_ratings?: number
+          photographer_accurate_ratings?: number
+          photographer_accuracy_percentage?: number
           created_at?: string
           updated_at?: string
         }
@@ -29,6 +43,8 @@ export interface Database {
           avatar_url?: string | null
           bio?: string | null
           is_admin?: boolean
+          photographer_status?: 'pending' | 'approved' | 'denied' | null
+          photographer_approved_at?: string | null
           updated_at?: string
         }
       }
@@ -83,6 +99,9 @@ export interface Database {
           blurhash: string | null
           width: number | null
           height: number | null
+          quality_score: number | null
+          rating_count: number
+          weighted_rating_sum: number
           created_at: string
           updated_at: string
         }
@@ -97,6 +116,9 @@ export interface Database {
           blurhash?: string | null
           width?: number | null
           height?: number | null
+          quality_score?: number | null
+          rating_count?: number
+          weighted_rating_sum?: number
           created_at?: string
           updated_at?: string
         }
@@ -104,7 +126,42 @@ export interface Database {
           id?: string
           caption?: string | null
           tags?: string[] | null
+          quality_score?: number | null
+          rating_count?: number
+          weighted_rating_sum?: number
           updated_at?: string
+        }
+      }
+      photo_ratings: {
+        Row: {
+          id: string
+          user_id: string
+          post_id: string
+          rating: number
+          rating_label: 'low_quality' | 'standard' | 'good' | 'high_quality' | 'exceptional'
+          time_to_rate_hours: number | null
+          influence_at_rating: number
+          was_accurate: boolean | null
+          accuracy_bonus: number
+          created_at: string
+          evaluated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          post_id: string
+          rating: number
+          rating_label: 'low_quality' | 'standard' | 'good' | 'high_quality' | 'exceptional'
+          time_to_rate_hours?: number | null
+          influence_at_rating?: number
+          was_accurate?: boolean | null
+          accuracy_bonus?: number
+          created_at?: string
+          evaluated_at?: string | null
+        }
+        Update: {
+          rating?: number
+          rating_label?: 'low_quality' | 'standard' | 'good' | 'high_quality' | 'exceptional'
         }
       }
       post_events: {
@@ -239,6 +296,7 @@ export type User = Database['public']['Tables']['users']['Row']
 export type Event = Database['public']['Tables']['events']['Row']
 export type Post = Database['public']['Tables']['posts']['Row']
 export type PostEvent = Database['public']['Tables']['post_events']['Row']
+export type PhotoRating = Database['public']['Tables']['photo_ratings']['Row']
 export type Like = Database['public']['Tables']['likes']['Row']
 export type Comment = Database['public']['Tables']['comments']['Row']
 export type Follow = Database['public']['Tables']['follows']['Row']
