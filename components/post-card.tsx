@@ -1,15 +1,17 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Heart, MessageCircle, Download, Share2, Play, Star, Award } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { useToast } from "@/lib/hooks/use-toast"
 import { PhotographerBadge } from "@/components/photographer-badge"
+import { PhotoRating } from "@/components/photo-rating"
 import type { PostWithUser } from "@/lib/types/database"
 
 interface PostCardProps {
@@ -24,8 +26,45 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
   )
   const [likeCount, setLikeCount] = useState(post._count?.likes || 0)
   const [downloading, setDownloading] = useState(false)
+  const [isPhotographer, setIsPhotographer] = useState(false)
+  const [photographerInfluence, setPhotographerInfluence] = useState(1.0)
+  const [existingRating, setExistingRating] = useState<number | undefined>()
+  const [ratingDialogOpen, setRatingDialogOpen] = useState(false)
   const { toast } = useToast()
   const supabase = createClient()
+
+  useEffect(() => {
+    if (currentUserId) {
+      checkPhotographerStatus()
+    }
+  }, [currentUserId])
+
+  const checkPhotographerStatus = async () => {
+    if (!currentUserId) return
+
+    const { data: userData } = await (supabase as any)
+      .from("users")
+      .select("photographer_status, photographer_influence")
+      .eq("id", currentUserId)
+      .single()
+
+    if (userData?.photographer_status === "approved") {
+      setIsPhotographer(true)
+      setPhotographerInfluence(userData.photographer_influence || 1.0)
+
+      // Check for existing rating
+      const { data: ratingData } = await (supabase as any)
+        .from("photo_ratings")
+        .select("rating")
+        .eq("user_id", currentUserId)
+        .eq("post_id", post.id)
+        .single()
+
+      if (ratingData) {
+        setExistingRating(ratingData.rating)
+      }
+    }
+  }
 
   const handleLike = async () => {
     if (!currentUserId) {
@@ -278,6 +317,39 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
             >
               <Share2 className="w-4 h-4" />
             </Button>
+            {isPhotographer && currentUserId !== post.user_id && (
+              <Dialog open={ratingDialogOpen} onOpenChange={setRatingDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant={existingRating ? "default" : "outline"}
+                    size="sm"
+                    className="flex items-center space-x-1"
+                  >
+                    <Star className={`w-4 h-4 ${existingRating ? 'fill-current' : ''}`} />
+                    <span className="text-xs">
+                      {existingRating ? `${existingRating}★` : 'Rate'}
+                    </span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Rate This Photo</DialogTitle>
+                  </DialogHeader>
+                  <PhotoRating
+                    postId={post.id}
+                    photographerId={currentUserId}
+                    photographerInfluence={photographerInfluence}
+                    postCreatedAt={post.created_at}
+                    existingRating={existingRating}
+                    onRatingSubmitted={() => {
+                      setRatingDialogOpen(false)
+                      checkPhotographerStatus()
+                      if (onLikeUpdate) onLikeUpdate()
+                    }}
+                  />
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         </div>
       </div>
