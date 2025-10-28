@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { UploadZone } from "@/components/upload-zone"
@@ -12,7 +12,7 @@ import { useToast } from "@/lib/hooks/use-toast"
 import { Loader2 } from "lucide-react"
 import type { Event } from "@/lib/types/database"
 
-export default function UploadPage() {
+function UploadPageContent() {
   const [files, setFiles] = useState<File[]>([])
   const [caption, setCaption] = useState("")
   const [tags, setTags] = useState("")
@@ -257,5 +257,22 @@ export default function UploadPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function UploadPage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Upload Media</CardTitle>
+            <CardDescription>Loading...</CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    }>
+      <UploadPageContent />
+    </Suspense>
   )
 }

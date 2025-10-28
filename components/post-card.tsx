@@ -39,7 +39,7 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
     try {
       if (isLiked) {
         // Unlike
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from("likes")
           .delete()
           .eq("user_id", currentUserId)
@@ -51,9 +51,9 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
         }
       } else {
         // Like
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from("likes")
-          .insert({ user_id: currentUserId, post_id: post.id } as any)
+          .insert({ user_id: currentUserId, post_id: post.id })
 
         if (!error) {
           setIsLiked(true)
@@ -73,9 +73,9 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
     setDownloading(true)
     try {
       // Record download
-      await supabase
+      await (supabase as any)
         .from("downloads")
-        .insert({ post_id: post.id, user_id: currentUserId } as any)
+        .insert({ post_id: post.id, user_id: currentUserId })
 
       // Download file
       const response = await fetch(post.media_url)
