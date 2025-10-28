@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
   let selection = POST_SELECTION
   let eventContext: Event | null = null
-  let postQuery = supabase.from("posts")
+  let postQuery = (supabase as any).from("posts")
 
   // Filter by view
   if (view === "following") {
