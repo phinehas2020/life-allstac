@@ -17,7 +17,7 @@ export async function GET(
     .from("users")
     .select("*")
     .eq("username", username)
-    .maybeSingle<User>()
+    .maybeSingle()
 
   if (userError) {
     return jsonResponse(

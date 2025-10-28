@@ -19,7 +19,7 @@ export async function GET(
     .from("posts")
     .select(POST_SELECTION)
     .eq("id", postId)
-    .maybeSingle<RawPost>()
+    .maybeSingle()
 
   if (error) {
     return jsonResponse(
