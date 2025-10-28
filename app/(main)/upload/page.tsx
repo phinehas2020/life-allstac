@@ -112,10 +112,10 @@ export default function UploadPage() {
         
         // Add event names as tags
         const eventNames = events
-          .filter(e => selectedEvents.includes(e.id))
-          .map(e => e.name)
+          .filter((e: any) => selectedEvents.includes(e.id))
+          .map((e: any) => e.name)
         
-        const allTags = [...new Set([...tagsArray, ...eventNames])]
+        const allTags = Array.from(new Set([...tagsArray, ...eventNames]))
 
         // Create post record
         const { data: postData, error: postError } = await supabase
