@@ -79,7 +79,7 @@ export default function PhotographersAdminPage() {
     }
 
     const { error } = await supabase
-      .from<Database["public"]["Tables"]["users"]["Row"]>("users")
+      .from("users")
       .update(updates)
       .eq("id", userId)
 
@@ -107,7 +107,7 @@ export default function PhotographersAdminPage() {
     }
 
     const { error } = await supabase
-      .from<Database["public"]["Tables"]["users"]["Row"]>("users")
+      .from("users")
       .update(updates)
       .eq("id", userId)
 
