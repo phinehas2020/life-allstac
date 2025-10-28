@@ -8,7 +8,7 @@ import { Check, X, Camera, TrendingUp } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { useToast } from "@/lib/hooks/use-toast"
 import { PhotographerBadge } from "@/components/photographer-badge"
-import type { User } from "@/lib/types/database"
+import type { Database, User } from "@/lib/types/database"
 import Link from "next/link"
 
 export default function PhotographersAdminPage() {
@@ -72,12 +72,15 @@ export default function PhotographersAdminPage() {
   }
 
   const handleApprove = async (userId: string) => {
+    const updates: Database["public"]["Tables"]["users"]["Update"] = {
+      photographer_status: "approved",
+      photographer_approved_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+
     const { error } = await supabase
       .from("users")
-      .update({
-        photographer_status: "approved",
-        photographer_approved_at: new Date().toISOString(),
-      } as any)
+      .update(updates)
       .eq("id", userId)
 
     if (error) {
@@ -98,11 +101,14 @@ export default function PhotographersAdminPage() {
   }
 
   const handleDeny = async (userId: string) => {
+    const updates: Database["public"]["Tables"]["users"]["Update"] = {
+      photographer_status: "denied",
+      updated_at: new Date().toISOString(),
+    }
+
     const { error } = await supabase
       .from("users")
-      .update({
-        photographer_status: "denied",
-      } as any)
+      .update(updates)
       .eq("id", userId)
 
     if (error) {
