@@ -67,7 +67,7 @@ export default function ProfilePage() {
           )
         `)
         .eq("user_id", userData.id)
-        .order("quality_score", { ascending: false, nullsLast: true })
+        .order("quality_score", { ascending: false })
         .order("created_at", { ascending: false })
 
       if (postsData) {

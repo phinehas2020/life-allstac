@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
     queryWithSelect = queryWithSelect.order("created_at", { ascending: false })
   } else {
     queryWithSelect = queryWithSelect
-      .order("quality_score", { ascending: false, nullsLast: true })
+      .order("quality_score", { ascending: false })
       .order("created_at", { ascending: false })
   }
 

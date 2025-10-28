@@ -53,7 +53,7 @@ export default function ExplorePage() {
             event:events(id, name, slug)
           )
         `)
-        .order("quality_score", { ascending: false, nullsLast: true })
+        .order("quality_score", { ascending: false })
         .order("created_at", { ascending: false })
         .range(currentPage * 20, (currentPage + 1) * 20 - 1)
 
@@ -108,7 +108,7 @@ export default function ExplorePage() {
           )
         `)
         .or(`caption.ilike.%${searchQuery}%,tags.cs.{${searchQuery}}`)
-        .order("quality_score", { ascending: false, nullsLast: true })
+        .order("quality_score", { ascending: false })
         .order("created_at", { ascending: false })
         .range(currentPage * 20, (currentPage + 1) * 20 - 1)
 

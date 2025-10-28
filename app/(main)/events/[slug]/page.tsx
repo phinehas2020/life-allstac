@@ -65,7 +65,7 @@ export default function EventDetailPage() {
           post_events!inner(event_id)
         `)
         .eq("post_events.event_id", eventData.id)
-        .order("quality_score", { ascending: false, nullsLast: true })
+        .order("quality_score", { ascending: false })
         .order("created_at", { ascending: false })
 
       if (postsData) {

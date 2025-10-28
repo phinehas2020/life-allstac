@@ -51,7 +51,7 @@ export default function HomePage() {
             event:events(id, name, slug)
           )
         `)
-        .order("quality_score", { ascending: false, nullsLast: true })
+        .order("quality_score", { ascending: false })
         .order("created_at", { ascending: false })
         .range(currentPage * 20, (currentPage + 1) * 20 - 1)
 
@@ -122,7 +122,7 @@ export default function HomePage() {
           )
         `)
         .in("user_id", followingIds)
-        .order("quality_score", { ascending: false, nullsLast: true })
+        .order("quality_score", { ascending: false })
         .order("created_at", { ascending: false })
         .range(currentPage * 20, (currentPage + 1) * 20 - 1)
 
