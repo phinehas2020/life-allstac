@@ -71,12 +71,12 @@ export function PhotoRating({
 
       if (existingRating) {
         // Update existing rating
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from("photo_ratings")
           .update({
             rating: selectedRating,
             rating_label: ratingLabelMap[selectedRating],
-          } as any)
+          })
           .eq("user_id", photographerId)
           .eq("post_id", postId)
 
@@ -90,14 +90,14 @@ export function PhotoRating({
         }
       } else {
         // Create new rating
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from("photo_ratings")
           .insert({
             user_id: photographerId,
             post_id: postId,
             rating: selectedRating,
             rating_label: ratingLabelMap[selectedRating],
-          } as any)
+          })
 
         if (error) {
           toast({
