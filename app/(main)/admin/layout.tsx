@@ -2,6 +2,7 @@ import type { ReactNode } from "react"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { createServerSupabaseClient } from "@/lib/supabase/server"
+import type { User } from "@/lib/types/database"
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Dashboard" },
@@ -18,11 +19,13 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     redirect("/login")
   }
 
+  type AdminFlag = Pick<User, "is_admin">
+
   const { data: profile } = await supabase
     .from("users")
     .select("is_admin")
     .eq("id", user.id)
-    .single()
+    .maybeSingle<AdminFlag>()
 
   if (!profile?.is_admin) {
     redirect("/")
