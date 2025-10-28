@@ -156,12 +156,12 @@ export default function ProfilePage() {
   }
 
   const handleApplyPhotographer = async () => {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("users")
       .update({
         photographer_status: "pending",
         photographer_applied_at: new Date().toISOString(),
-      } as any)
+      })
       .eq("id", user!.id)
 
     if (error) {
