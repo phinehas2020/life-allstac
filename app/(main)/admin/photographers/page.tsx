@@ -75,11 +75,11 @@ export default function PhotographersAdminPage() {
     const timestamp = new Date().toISOString()
     const { error } = await supabase
       .from("users")
-      .update<Database["public"]["Tables"]["users"]["Update"]>({
+      .update({
         photographer_status: "approved",
         photographer_approved_at: timestamp,
         updated_at: timestamp,
-      })
+      } satisfies Database["public"]["Tables"]["users"]["Update"])
       .eq("id", userId)
 
     if (error) {
@@ -103,10 +103,10 @@ export default function PhotographersAdminPage() {
     const timestamp = new Date().toISOString()
     const { error } = await supabase
       .from("users")
-      .update<Database["public"]["Tables"]["users"]["Update"]>({
+      .update({
         photographer_status: "denied",
         updated_at: timestamp,
-      })
+      } satisfies Database["public"]["Tables"]["users"]["Update"])
       .eq("id", userId)
 
     if (error) {
