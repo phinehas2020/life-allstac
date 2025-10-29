@@ -40,12 +40,32 @@ export default function ProfilePage() {
     try {
       setLoading(true)
 
-      // Fetch user by username or ID
-      const { data: userData, error: userError } = await supabase
+      // Try to fetch user by username first, then by ID
+      let userData: User | null = null
+      let userError = null
+
+      // First try by username
+      const { data: userByName, error: nameError } = await (supabase as any)
         .from("users")
         .select("*")
-        .or(`username.eq.${username},id.eq.${username}`)
-        .maybeSingle<User>()
+        .eq("username", username)
+        .maybeSingle()
+
+      if (userByName) {
+        userData = userByName
+      } else if (!nameError || nameError.code === 'PGRST116') {
+        // If not found by username, try by ID
+        const { data: userById, error: idError } = await (supabase as any)
+          .from("users")
+          .select("*")
+          .eq("id", username)
+          .maybeSingle()
+
+        userData = userById
+        userError = idError
+      } else {
+        userError = nameError
+      }
 
       if (userError || !userData) {
         console.error("Error fetching user:", userError)
