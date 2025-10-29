@@ -113,6 +113,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS on_rating_change ON public.photo_ratings;
 CREATE TRIGGER on_rating_change
     AFTER INSERT OR UPDATE ON public.photo_ratings
     FOR EACH ROW
@@ -231,6 +232,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS set_rating_timing ON public.photo_ratings;
 CREATE TRIGGER set_rating_timing
     BEFORE INSERT ON public.photo_ratings
     FOR EACH ROW
