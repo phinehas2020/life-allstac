@@ -40,7 +40,12 @@ ALTER TABLE public.posts ADD COLUMN IF NOT EXISTS weighted_rating_sum DECIMAL(10
 -- Enable RLS on photo_ratings
 ALTER TABLE public.photo_ratings ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies for photo_ratings
+-- RLS Policies for photo_ratings (drop first to avoid conflicts)
+DROP POLICY IF EXISTS "Anyone can view ratings" ON public.photo_ratings;
+DROP POLICY IF EXISTS "Approved photographers can rate" ON public.photo_ratings;
+DROP POLICY IF EXISTS "Photographers can update own ratings" ON public.photo_ratings;
+DROP POLICY IF EXISTS "Photographers can delete own unprocessed ratings" ON public.photo_ratings;
+
 CREATE POLICY "Anyone can view ratings" ON public.photo_ratings
     FOR SELECT USING (true);
 
