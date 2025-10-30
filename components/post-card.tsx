@@ -280,7 +280,7 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
         )}
 
         {/* Actions */}
-        <div className="flex items-center justify-between pt-2 border-t gap-2">
+        <div className="flex items-center justify-between pt-2 border-t gap-2 flex-wrap">
           <div className="flex items-center space-x-4 flex-shrink-0">
             <button
               onClick={handleLike}
@@ -301,7 +301,7 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
               <span className="text-sm">{post._count?.comments || 0}</span>
             </Link>
           </div>
-          <div className="flex items-center space-x-2 flex-shrink-0 min-w-0">
+          <div className="flex items-center space-x-2 flex-shrink-0">
             <Button
               variant="ghost"
               size="icon"
