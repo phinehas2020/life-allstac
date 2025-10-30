@@ -24,7 +24,8 @@ export default function ProfilePage() {
   const [followingCount, setFollowingCount] = useState(0)
   const { toast } = useToast()
   const supabase = createClient()
-  const username = params.username as string
+  // Decode URL-encoded username (e.g., "Phinehas%20Adams" -> "Phinehas Adams")
+  const username = decodeURIComponent(params.username as string).trim()
 
   useEffect(() => {
     getCurrentUser()
@@ -44,11 +45,11 @@ export default function ProfilePage() {
       let userData: User | null = null
       let userError = null
 
-      // First try by username
+      // First try by username (case-insensitive, trimmed)
       const { data: userByName, error: nameError } = await (supabase as any)
         .from("users")
         .select("*")
-        .eq("username", username)
+        .ilike("username", username)
         .maybeSingle()
 
       if (userByName) {
@@ -69,6 +70,8 @@ export default function ProfilePage() {
 
       if (userError || !userData) {
         console.error("Error fetching user:", userError)
+        console.error("Searched username:", username)
+        console.error("User data:", userData)
         return
       }
 
