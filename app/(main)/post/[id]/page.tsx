@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Heart, MessageCircle, Download, Share2, Send, ArrowLeft, Star } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { useToast } from "@/lib/hooks/use-toast"
@@ -45,13 +46,18 @@ export default function PostPage() {
     setCurrentUser(user)
     
     if (user) {
-      const { data } = await supabase
+      const { data, error } = await (supabase as any)
         .from("users")
-        .select("*")
+        .select("*, photographer_status, photographer_influence")
         .eq("id", user.id)
-        .maybeSingle<User>()
+        .single()
+      
+      if (error) {
+        console.error("Error fetching user data:", error)
+      }
       
       if (data) {
+        console.log("Current user data:", { photographer_status: data.photographer_status, photographer_influence: data.photographer_influence })
         setCurrentUserData(data)
       }
     }
@@ -79,7 +85,7 @@ export default function PostPage() {
         .from("posts")
         .select(`
           *,
-          user:users!posts_user_id_fkey(id, username, avatar_url),
+          user:users!posts_user_id_fkey(id, username, avatar_url, photographer_status, photographer_influence),
           likes(user_id),
           post_events(
             event:events(id, name, slug)
@@ -335,6 +341,36 @@ export default function PostPage() {
               </div>
             </div>
             <div className="flex items-center space-x-2">
+              {currentUserData?.photographer_status === "approved" && currentUser?.id !== post.user_id && (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="bg-amber-500 hover:bg-amber-600 text-white"
+                    >
+                      <Star className="w-4 h-4 mr-2" />
+                      {existingRating ? `${existingRating}★` : "Rate"}
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Rate This Photo</DialogTitle>
+                    </DialogHeader>
+                    <PhotoRating
+                      postId={postId}
+                      photographerId={currentUser!.id}
+                      photographerInfluence={currentUserData.photographer_influence}
+                      postCreatedAt={post.created_at}
+                      existingRating={existingRating || undefined}
+                      onRatingSubmitted={() => {
+                        fetchPost()
+                        checkExistingRating()
+                      }}
+                    />
+                  </DialogContent>
+                </Dialog>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -367,7 +403,15 @@ export default function PostPage() {
                 {post.user?.username?.[0]?.toUpperCase() || "U"}
               </div>
               <div>
-                <p className="font-semibold">{post.user?.username || "Unknown User"}</p>
+                <div className="flex items-center space-x-2">
+                  <p className="font-semibold">{post.user?.username || "Unknown User"}</p>
+                  {post.user?.photographer_status === "approved" && (
+                    <PhotographerBadge
+                      influence={post.user?.photographer_influence}
+                      accuracy={undefined}
+                    />
+                  )}
+                </div>
                 <p className="text-sm text-gray-500">
                   {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
                 </p>
@@ -426,21 +470,6 @@ export default function PostPage() {
                 Rated by {post.rating_count} photographer{post.rating_count !== 1 ? 's' : ''}
               </p>
             </div>
-          )}
-
-          {/* Photographer Rating Interface */}
-          {currentUserData?.photographer_status === "approved" && currentUser?.id !== post.user_id && (
-            <PhotoRating
-              postId={postId}
-              photographerId={currentUser!.id}
-              photographerInfluence={currentUserData.photographer_influence}
-              postCreatedAt={post.created_at}
-              existingRating={existingRating || undefined}
-              onRatingSubmitted={() => {
-                fetchPost()
-                checkExistingRating()
-              }}
-            />
           )}
 
           {/* Comments Section */}
