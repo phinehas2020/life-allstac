@@ -280,8 +280,8 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
         )}
 
         {/* Actions */}
-        <div className="flex items-center justify-between pt-2 border-t">
-          <div className="flex items-center space-x-4">
+        <div className="flex items-center justify-between pt-2 border-t gap-2">
+          <div className="flex items-center space-x-4 flex-shrink-0">
             <button
               onClick={handleLike}
               className="flex items-center space-x-1 hover:text-red-500 transition-colors"
@@ -301,12 +301,13 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
               <span className="text-sm">{post._count?.comments || 0}</span>
             </Link>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 flex-shrink-0 min-w-0">
             <Button
               variant="ghost"
               size="icon"
               onClick={handleDownload}
               disabled={downloading}
+              className="flex-shrink-0"
             >
               <Download className="w-4 h-4" />
             </Button>
@@ -314,6 +315,7 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
               variant="ghost"
               size="icon"
               onClick={handleShare}
+              className="flex-shrink-0"
             >
               <Share2 className="w-4 h-4" />
             </Button>
@@ -323,9 +325,9 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
                   <Button
                     variant={existingRating ? "default" : "outline"}
                     size="sm"
-                    className="flex items-center space-x-1"
+                    className="flex items-center space-x-1 flex-shrink-0 whitespace-nowrap"
                   >
-                    <Star className={`w-4 h-4 ${existingRating ? 'fill-current' : ''}`} />
+                    <Star className={`w-4 h-4 flex-shrink-0 ${existingRating ? 'fill-current' : ''}`} />
                     <span className="text-xs">
                       {existingRating ? `${existingRating}★` : 'Rate'}
                     </span>

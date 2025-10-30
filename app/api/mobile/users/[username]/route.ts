@@ -13,11 +13,49 @@ export async function GET(
   const currentUser = await getUserFromRequest(supabase, request)
   const username = params.username
 
-  const { data: userRecord, error: userError } = await (supabase as any)
+  // Try to find user by username first, then by email, then by ID
+  let userRecord = null
+  let userError = null
+
+  // First try username
+  const { data: userByUsername, error: err1 } = await (supabase as any)
     .from("users")
     .select("*")
     .eq("username", username)
     .maybeSingle()
+
+  if (userByUsername) {
+    userRecord = userByUsername
+  } else {
+    // If not found by username, try email
+    const { data: userByEmail, error: err2 } = await (supabase as any)
+      .from("users")
+      .select("*")
+      .eq("email", username)
+      .maybeSingle()
+
+    if (userByEmail) {
+      userRecord = userByEmail
+    } else {
+      // If still not found, try ID (UUID format check)
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(username)
+      if (isUUID) {
+        const { data: userById, error: err3 } = await (supabase as any)
+          .from("users")
+          .select("*")
+          .eq("id", username)
+          .maybeSingle()
+
+        if (userById) {
+          userRecord = userById
+        } else {
+          userError = err3 || err2 || err1
+        }
+      } else {
+        userError = err2 || err1
+      }
+    }
+  }
 
   if (userError) {
     return jsonResponse(

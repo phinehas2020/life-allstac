@@ -17,7 +17,7 @@ export const POST_SELECTION = `
   *,
   user:users!posts_user_id_fkey(id, username, avatar_url, photographer_status, photographer_influence),
   likes(user_id),
-  comments(id),
+  comments(id, content, created_at, user:users!comments_user_id_fkey(id, username, avatar_url)),
   downloads(id),
   post_events(
     event:events(id, name, slug, cover_image)

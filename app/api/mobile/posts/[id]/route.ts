@@ -35,7 +35,35 @@ export async function GET(
     )
   }
 
+  // Fetch comments separately with full user data
+  const { data: commentsData } = await (supabase as any)
+    .from("comments")
+    .select(`
+      id,
+      content,
+      created_at,
+      user:users!comments_user_id_fkey(id, username, avatar_url)
+    `)
+    .eq("post_id", postId)
+    .order("created_at", { ascending: true })
+
   const payload = mapPostToMobile(data, currentUser?.id)
+  
+  // Add comments to payload
+  if (commentsData) {
+    payload.comments = commentsData.map((comment: any) => ({
+      id: comment.id,
+      content: comment.content,
+      createdAt: comment.created_at,
+      user: comment.user
+        ? {
+            id: comment.user.id,
+            username: comment.user.username,
+            avatarUrl: comment.user.avatar_url,
+          }
+        : null,
+    }))
+  }
 
   return jsonResponse({ post: payload })
 }

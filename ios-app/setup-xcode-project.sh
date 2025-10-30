@@ -1,0 +1,31 @@
+#!/bin/bash
+# setup-xcode-project.sh
+# Helper script to set up Xcode project from Swift files
+
+echo "Setting up Life iOS App Xcode project..."
+echo ""
+echo "Please follow these steps:"
+echo ""
+echo "1. Open Xcode"
+echo "2. File → New → Project"
+echo "3. Select 'iOS' → 'App'"
+echo "4. Configure:"
+echo "   - Product Name: LifeApp"
+echo "   - Interface: SwiftUI"
+echo "   - Language: Swift"
+echo "   - Use Core Data: No"
+echo "   - Include Tests: Yes (optional)"
+echo "5. Save location: $(pwd)"
+echo "6. Click Create"
+echo ""
+echo "After creating the project:"
+echo "7. Delete the default ContentView.swift that Xcode creates"
+echo "8. Right-click on project → Add Files to LifeApp..."
+echo "9. Select all files from LifeApp/ folder"
+echo "10. Make sure 'Copy items if needed' is checked"
+echo "11. Make sure 'Create groups' is selected"
+echo "12. Click 'Add'"
+echo ""
+echo "12. Update baseURL in Services/ApiService.swift to your backend URL"
+echo "13. Build and run!"
+

@@ -37,6 +37,16 @@ export interface MobilePostPayload {
   stats: MobilePostStats
   events: MobileEventSummary[]
   likedByCurrentUser: boolean
+  comments?: Array<{
+    id: string
+    content: string
+    createdAt: string
+    user: {
+      id: string
+      username: string | null
+      avatarUrl: string | null
+    } | null
+  }>
 }
 
 export interface MobileFeedResponse {
