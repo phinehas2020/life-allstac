@@ -322,71 +322,92 @@ export default function PostPage() {
           </Card>
 
           {/* Actions */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={handleLike}
-                className="flex items-center space-x-2 hover:text-red-500 transition-colors"
-              >
-                <Heart
-                  className={`w-6 h-6 ${
-                    isLiked ? "fill-red-500 text-red-500" : ""
-                  }`}
-                />
-                <span className="font-medium">{likeCount} likes</span>
-              </button>
-              <div className="flex items-center space-x-2">
-                <MessageCircle className="w-6 h-6" />
-                <span className="font-medium">{comments.length} comments</span>
+          <div className="border-t pt-4 mt-4">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              {/* Left side: Engagement metrics */}
+              <div className="flex items-center gap-6">
+                <button
+                  onClick={handleLike}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors group"
+                >
+                  <Heart
+                    className={`w-5 h-5 transition-all ${
+                      isLiked 
+                        ? "fill-red-500 text-red-500 scale-110" 
+                        : "text-gray-700 group-hover:text-red-500"
+                    }`}
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    {likeCount}
+                  </span>
+                </button>
+                <button
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <MessageCircle className="w-5 h-5 text-gray-700" />
+                  <span className="text-sm font-medium text-gray-700">
+                    {comments.length}
+                  </span>
+                </button>
               </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              {currentUserData?.photographer_status === "approved" && currentUser?.id !== post.user_id && (
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="default"
-                      size="sm"
-                      className="bg-amber-500 hover:bg-amber-600 text-white"
-                    >
-                      <Star className="w-4 h-4 mr-2" />
-                      {existingRating ? `${existingRating}★` : "Rate"}
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Rate This Photo</DialogTitle>
-                    </DialogHeader>
-                    <PhotoRating
-                      postId={postId}
-                      photographerId={currentUser!.id}
-                      photographerInfluence={currentUserData.photographer_influence}
-                      postCreatedAt={post.created_at}
-                      existingRating={existingRating || undefined}
-                      onRatingSubmitted={() => {
-                        fetchPost()
-                        checkExistingRating()
-                      }}
-                    />
-                  </DialogContent>
-                </Dialog>
-              )}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDownload}
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleShare}
-              >
-                <Share2 className="w-4 h-4 mr-2" />
-                Share
-              </Button>
+
+              {/* Right side: Action buttons */}
+              <div className="flex items-center gap-2">
+                {currentUserData?.photographer_status === "approved" && currentUser?.id !== post.user_id && (
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant={existingRating ? "default" : "outline"}
+                        size="sm"
+                        className={`gap-2 ${
+                          existingRating 
+                            ? "bg-amber-500 hover:bg-amber-600 text-white border-amber-500" 
+                            : "border-gray-300 hover:bg-amber-50 hover:border-amber-300"
+                        }`}
+                      >
+                        <Star className={`w-4 h-4 ${existingRating ? "fill-current" : ""}`} />
+                        <span className="text-sm font-medium">
+                          {existingRating ? `${existingRating}★` : "Rate"}
+                        </span>
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Rate This Photo</DialogTitle>
+                      </DialogHeader>
+                      <PhotoRating
+                        postId={postId}
+                        photographerId={currentUser!.id}
+                        photographerInfluence={currentUserData.photographer_influence}
+                        postCreatedAt={post.created_at}
+                        existingRating={existingRating || undefined}
+                        onRatingSubmitted={() => {
+                          fetchPost()
+                          checkExistingRating()
+                        }}
+                      />
+                    </DialogContent>
+                  </Dialog>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownload}
+                  className="gap-2 border-gray-300 hover:bg-gray-50"
+                >
+                  <Download className="w-4 h-4" />
+                  <span className="text-sm font-medium">Download</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleShare}
+                  className="gap-2 border-gray-300 hover:bg-gray-50"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span className="text-sm font-medium">Share</span>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
