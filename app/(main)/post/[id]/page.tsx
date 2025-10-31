@@ -356,20 +356,27 @@ export default function PostPage() {
                 {currentUserData?.photographer_status === "approved" && currentUser?.id !== post.user_id && (
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button
-                        variant={existingRating ? "default" : "outline"}
-                        size="sm"
-                        className={`gap-2 ${
-                          existingRating 
-                            ? "bg-amber-500 hover:bg-amber-600 text-white border-amber-500" 
-                            : "border-gray-300 hover:bg-amber-50 hover:border-amber-300"
-                        }`}
-                      >
-                        <Star className={`w-4 h-4 ${existingRating ? "fill-current" : ""}`} />
-                        <span className="text-sm font-medium">
-                          {existingRating ? `${existingRating}★` : "Rate"}
-                        </span>
-                      </Button>
+                      {existingRating ? (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="gap-2 bg-amber-500 hover:bg-amber-600 text-white border-amber-500"
+                        >
+                          <Star className="w-4 h-4 fill-current" />
+                          <span className="text-sm font-medium">
+                            {existingRating}★
+                          </span>
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-2 border-gray-300 hover:bg-amber-50 hover:border-amber-300 text-gray-700"
+                        >
+                          <Star className="w-4 h-4" />
+                          <span className="text-sm font-medium">Rate</span>
+                        </Button>
+                      )}
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>

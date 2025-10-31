@@ -77,13 +77,18 @@ export default function PhotographersAdminPage() {
       .update({
         photographer_status: "approved",
         photographer_approved_at: new Date().toISOString(),
+        photographer_influence: 1.0, // Initialize with default influence
+        photographer_total_ratings: 0,
+        photographer_accurate_ratings: 0,
+        photographer_accuracy_percentage: 0.0,
       })
       .eq("id", userId)
 
     if (error) {
+      console.error("Approval error:", error)
       toast({
         title: "Error",
-        description: "Failed to approve photographer",
+        description: error.message || "Failed to approve photographer. Make sure RLS policies allow admin updates.",
         variant: "destructive",
       })
       return
