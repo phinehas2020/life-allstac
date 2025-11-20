@@ -184,32 +184,33 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
           <div className="relative">
             <video
               src={post.media_url}
-              className="w-full h-auto"
+              className="w-full h-auto rounded-t-2xl"
               controls
               preload="metadata"
             />
-            <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded flex items-center space-x-1">
+            <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-sm text-white px-2 py-1 rounded-full flex items-center space-x-1">
               <Play className="w-3 h-3" />
-              <span className="text-xs">Video</span>
+              <span className="text-xs font-medium">Video</span>
             </div>
           </div>
         ) : (
-          <Link href={`/post/${post.id}`}>
+          <Link href={`/post/${post.id}`} className="block relative">
             <div className="relative overflow-hidden">
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors z-10" />
               <Image
                 src={post.media_url}
                 alt={post.caption || "User uploaded content"}
-                width={400}
-                height={400}
-                className="w-full h-auto transition-transform group-hover:scale-105 object-cover"
+                width={600}
+                height={800}
+                className="w-full h-auto transition-transform duration-500 group-hover:scale-105 object-cover"
                 style={{ width: '100%', height: 'auto' }}
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 priority={false}
               />
               {post.quality_score && post.quality_score >= 4.0 && (
-                <div className="absolute top-2 left-2 bg-amber-500 text-white px-2 py-1 rounded-lg flex items-center space-x-1 shadow-lg">
-                  <Award className="w-3 h-3" />
-                  <span className="text-xs font-semibold">High Quality</span>
+                <div className="absolute top-3 left-3 z-20 bg-amber-500/90 backdrop-blur-sm text-white px-2.5 py-1 rounded-full flex items-center space-x-1 shadow-lg transform transition-transform hover:scale-110">
+                  <Award className="w-3.5 h-3.5" />
+                  <span className="text-xs font-bold tracking-wide">TOP PICK</span>
                 </div>
               )}
             </div>
@@ -229,62 +230,72 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
         <div className="flex items-center justify-between pt-2">
           <Link
             href={`/profile/${post.user?.username || post.user_id}`}
-            className="flex items-center space-x-2 hover:opacity-80"
+            className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
           >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white font-semibold text-sm">
-              {post.user?.username?.[0]?.toUpperCase() || "U"}
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary/60 ring-2 ring-white dark:ring-gray-800 shadow-sm flex items-center justify-center text-white font-bold text-sm">
+              {post.user?.avatar_url ? (
+                <Image
+                  src={post.user.avatar_url}
+                  alt={post.user.username || "User"}
+                  width={36}
+                  height={36}
+                  className="rounded-full object-cover w-full h-full"
+                />
+              ) : (
+                post.user?.username?.[0]?.toUpperCase() || "U"
+              )}
             </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="font-medium text-sm">
+            <div className="flex flex-col leading-tight">
+              <div className="flex items-center space-x-1.5">
+                <span className="font-bold text-sm text-primary">
                   {post.user?.username || "Unknown User"}
                 </span>
                 {post.user?.photographer_status === "approved" && (
                   <PhotographerBadge influence={post.user.photographer_influence} />
                 )}
               </div>
-              <span className="text-xs text-gray-500">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
                 {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
               </span>
             </div>
           </Link>
           {post.quality_score && post.quality_score >= 4.0 && (
-            <div className="flex items-center space-x-1 text-amber-600">
-              <Star className="w-4 h-4 fill-amber-500" />
-              <span className="text-xs font-semibold">{post.quality_score.toFixed(1)}</span>
+            <div className="flex items-center space-x-1 text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
+              <Star className="w-3.5 h-3.5 fill-amber-500" />
+              <span className="text-xs font-bold">{post.quality_score.toFixed(1)}</span>
             </div>
           )}
         </div>
 
         {/* Tags */}
         {post.tags && post.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1.5 pt-1">
             {post.tags.slice(0, 3).map((tag, index) => (
               <Link
                 key={index}
                 href={`/explore?tag=${tag}`}
-                className="text-xs text-primary hover:underline"
+                className="text-[11px] font-medium text-primary/80 bg-primary/5 hover:bg-primary/10 px-2 py-0.5 rounded-full transition-colors"
               >
                 #{tag}
               </Link>
             ))}
             {post.tags.length > 3 && (
-              <span className="text-xs text-gray-500">
-                +{post.tags.length - 3} more
+              <span className="text-[11px] text-muted-foreground px-1.5 py-0.5">
+                +{post.tags.length - 3}
               </span>
             )}
           </div>
         )}
 
-        {/* Events */}
+        {/* Events - refined */}
         {post.events && post.events.length > 0 && (
-          <div className="flex items-center space-x-2">
-            <span className="text-xs text-gray-500">In:</span>
+          <div className="flex items-center space-x-2 pt-1">
+            <span className="text-[10px] uppercase font-bold text-muted-foreground">Event</span>
             {post.events.map((event, index) => (
               <Link
                 key={event.id}
                 href={`/events/${event.slug}`}
-                className="text-xs bg-primary/10 text-primary px-2 py-1 rounded hover:bg-primary/20"
+                className="text-xs font-medium text-accent-foreground bg-accent/20 px-2 py-0.5 rounded-md hover:bg-accent/30 transition-colors"
               >
                 {event.name}
               </Link>
@@ -292,35 +303,37 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
           </div>
         )}
 
-        {/* Actions */}
-        <div className="flex items-center justify-between pt-2 border-t gap-2 flex-wrap">
-          <div className="flex items-center space-x-4 flex-shrink-0">
+        {/* Actions - Floating/Minimal */}
+        <div className="flex items-center justify-between pt-3 border-t border-border/40 gap-2 flex-wrap">
+          <div className="flex items-center space-x-3 flex-shrink-0">
             <button
               onClick={handleLike}
-              className="flex items-center space-x-1 hover:text-red-500 transition-colors"
+              className={`flex items-center space-x-1.5 transition-all duration-200 active:scale-95 ${
+                isLiked ? "text-red-500" : "text-muted-foreground hover:text-red-500"
+              }`}
             >
               <Heart
                 className={`w-5 h-5 ${
-                  isLiked ? "fill-red-500 text-red-500" : ""
+                  isLiked ? "fill-current" : ""
                 }`}
               />
-              <span className="text-sm">{likeCount}</span>
+              <span className="text-sm font-medium">{likeCount}</span>
             </button>
             <Link
               href={`/post/${post.id}`}
-              className="flex items-center space-x-1 hover:text-primary transition-colors"
+              className="flex items-center space-x-1.5 text-muted-foreground hover:text-primary transition-colors active:scale-95"
             >
               <MessageCircle className="w-5 h-5" />
-              <span className="text-sm">{post._count?.comments || 0}</span>
+              <span className="text-sm font-medium">{post._count?.comments || 0}</span>
             </Link>
           </div>
-          <div className="flex items-center space-x-2 flex-shrink-0">
+          <div className="flex items-center space-x-1 flex-shrink-0">
             <Button
               variant="ghost"
               size="icon"
               onClick={handleDownload}
               disabled={downloading}
-              className="flex-shrink-0"
+              className="w-8 h-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10"
             >
               <Download className="w-4 h-4" />
             </Button>
@@ -328,7 +341,7 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
               variant="ghost"
               size="icon"
               onClick={handleShare}
-              className="flex-shrink-0"
+              className="w-8 h-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10"
             >
               <Share2 className="w-4 h-4" />
             </Button>
@@ -338,12 +351,10 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
                   <Button
                     variant={existingRating ? "default" : "outline"}
                     size="sm"
-                    className="flex items-center space-x-1 flex-shrink-0 whitespace-nowrap"
+                    className="h-8 px-3 ml-1 rounded-full text-xs font-medium"
                   >
-                    <Star className={`w-4 h-4 flex-shrink-0 ${existingRating ? 'fill-current' : ''}`} />
-                    <span className="text-xs">
-                      {existingRating ? `${existingRating}★` : 'Rate'}
-                    </span>
+                    <Star className={`w-3.5 h-3.5 mr-1.5 ${existingRating ? 'fill-current' : ''}`} />
+                    {existingRating ? `${existingRating}★` : 'Rate'}
                   </Button>
                 </DialogTrigger>
                 <DialogContent>

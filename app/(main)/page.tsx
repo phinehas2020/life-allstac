@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { PostWithUser } from "@/lib/types/database"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
+import { Sparkles, Users } from "lucide-react"
 
 export default function HomePage() {
   const [posts, setPosts] = useState<PostWithUser[]>([])
@@ -169,49 +170,72 @@ export default function HomePage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Welcome to Life.Allstac</h1>
-        <p className="text-gray-600">
-          Share and discover moments from our community
-        </p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
 
-      {currentUser ? (
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-          <TabsList>
-            <TabsTrigger value="everything">Everything</TabsTrigger>
-            <TabsTrigger value="following">Following</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="everything" className="mt-6">
-            <MediaGallery
+        {/* Hero / Welcome Section */}
+        <div className="mb-12 text-center max-w-2xl mx-auto space-y-4">
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-primary font-heading">
+            Life.Allstac
+          </h1>
+          <p className="text-lg md:text-xl text-muted-foreground text-balance leading-relaxed">
+            A community-driven gallery of moments, memories, and visual stories.
+            Share yours today.
+          </p>
+        </div>
+
+        {currentUser ? (
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
+            <div className="flex justify-center mb-8">
+              <TabsList className="bg-secondary/50 p-1 rounded-full border border-border/50 h-auto">
+                <TabsTrigger
+                  value="everything"
+                  className="rounded-full px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-300 font-medium flex items-center gap-2"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Discover
+                </TabsTrigger>
+                <TabsTrigger
+                  value="following"
+                  className="rounded-full px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-300 font-medium flex items-center gap-2"
+                >
+                  <Users className="w-4 h-4" />
+                  Following
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            <TabsContent value="everything" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <MediaGallery
+                posts={posts}
+                currentUserId={currentUser?.id}
+                loading={loading}
+                onLoadMore={handleLoadMore}
+                hasMore={hasMore}
+              />
+            </TabsContent>
+
+            <TabsContent value="following" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <MediaGallery
+                posts={followingPosts}
+                currentUserId={currentUser?.id}
+                loading={loading}
+                onLoadMore={handleLoadMore}
+                hasMore={hasMore}
+              />
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+             <MediaGallery
               posts={posts}
-              currentUserId={currentUser?.id}
               loading={loading}
               onLoadMore={handleLoadMore}
               hasMore={hasMore}
             />
-          </TabsContent>
-          
-          <TabsContent value="following" className="mt-6">
-            <MediaGallery
-              posts={followingPosts}
-              currentUserId={currentUser?.id}
-              loading={loading}
-              onLoadMore={handleLoadMore}
-              hasMore={hasMore}
-            />
-          </TabsContent>
-        </Tabs>
-      ) : (
-        <MediaGallery
-          posts={posts}
-          loading={loading}
-          onLoadMore={handleLoadMore}
-          hasMore={hasMore}
-        />
-      )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

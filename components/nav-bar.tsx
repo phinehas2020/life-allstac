@@ -13,9 +13,18 @@ export function NavBar() {
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [userData, setUserData] = useState<UserData | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
   const supabase = createClient()
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   useEffect(() => {
     const getUser = async () => {
@@ -60,66 +69,82 @@ export function NavBar() {
     { href: "/explore", label: "Explore", icon: Search },
     { href: "/events", label: "Events", icon: Calendar },
     { href: "/photographers", label: "Photographers", icon: Trophy },
-    { href: "/upload", label: "Upload", icon: Upload },
   ]
 
   const adminItems = userData?.is_admin ? [
-    { href: "/admin/photographers", label: "Manage Photographers", icon: Shield },
+    { href: "/admin/photographers", label: "Manage", icon: Shield },
   ] : []
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-white border-b border-gray-200">
+    <nav
+      className={`sticky top-0 z-50 w-full transition-all duration-300 ${
+        scrolled
+          ? "bg-white/80 backdrop-blur-md border-b border-gray-200/50 shadow-sm"
+          : "bg-white border-b border-transparent"
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-16 md:h-20">
           {/* Logo */}
-          <Link href="/" className="flex items-center">
-            <span className="text-2xl font-bold text-primary">Life.</span>
+          <Link href="/" className="flex items-center group">
+            <span className="text-2xl md:text-3xl font-bold tracking-tighter text-primary group-hover:opacity-80 transition-opacity font-heading">
+              Life.Allstac
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-1 bg-secondary/50 p-1.5 rounded-full border border-border/50 backdrop-blur-sm">
             {navItems.map((item) => {
               const Icon = item.icon
+              const isActive = pathname === item.href
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center space-x-1 text-sm font-medium transition-colors hover:text-primary ${
-                    pathname === item.href
-                      ? "text-primary"
-                      : "text-gray-700"
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                    isActive
+                      ? "bg-white text-primary shadow-sm"
+                      : "text-gray-600 hover:text-primary hover:bg-white/50"
                   }`}
                 >
-                  <Icon className="w-5 h-5" />
+                  <Icon className={`w-4 h-4 ${isActive ? "stroke-[2.5px]" : ""}`} />
                   <span>{item.label}</span>
                 </Link>
               )
             })}
             {adminItems.map((item) => {
               const Icon = item.icon
+              const isActive = pathname === item.href
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center space-x-1 text-sm font-medium transition-colors hover:text-primary ${
-                    pathname === item.href
-                      ? "text-primary"
-                      : "text-gray-700"
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                    isActive
+                      ? "bg-white text-primary shadow-sm"
+                      : "text-gray-600 hover:text-primary hover:bg-white/50"
                   }`}
                 >
-                  <Icon className="w-5 h-5" />
+                  <Icon className={`w-4 h-4 ${isActive ? "stroke-[2.5px]" : ""}`} />
                   <span>{item.label}</span>
                 </Link>
               )
             })}
           </div>
 
-          {/* User Menu */}
-          <div className="hidden md:flex items-center space-x-4">
+          {/* User Actions */}
+          <div className="hidden md:flex items-center space-x-3">
+            <Link href="/upload">
+                <Button className="rounded-full px-6 font-semibold shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5">
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload
+                </Button>
+            </Link>
+
             {user ? (
               <>
                 <Link href={`/profile/${userData?.username || user.id}`}>
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" className="rounded-full w-10 h-10 hover:bg-secondary">
                     <User className="w-5 h-5" />
                   </Button>
                 </Link>
@@ -127,32 +152,39 @@ export function NavBar() {
                   variant="ghost"
                   size="icon"
                   onClick={handleLogout}
+                  className="rounded-full w-10 h-10 hover:bg-secondary text-gray-500 hover:text-destructive"
                 >
                   <LogOut className="w-5 h-5" />
                 </Button>
               </>
             ) : (
-              <>
+              <div className="flex items-center space-x-2 pl-2">
                 <Link href="/login">
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" className="rounded-full font-medium hover:bg-secondary">
                     Sign in
                   </Button>
                 </Link>
                 <Link href="/signup">
-                  <Button size="sm">
+                  <Button className="rounded-full px-5 font-semibold shadow-md">
                     Sign up
                   </Button>
                 </Link>
-              </>
+              </div>
             )}
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center space-x-2">
+            <Link href="/upload">
+                <Button size="icon" variant="ghost" className="rounded-full">
+                    <Upload className="w-5 h-5" />
+                </Button>
+            </Link>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="rounded-full"
             >
               {mobileMenuOpen ? (
                 <X className="w-6 h-6" />
@@ -166,18 +198,18 @@ export function NavBar() {
 
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-gray-200">
-          <div className="px-2 pt-2 pb-3 space-y-1">
+        <div className="md:hidden bg-white border-b border-gray-200 absolute w-full shadow-lg animate-accordion-down">
+          <div className="px-4 pt-2 pb-6 space-y-2">
             {navItems.map((item) => {
               const Icon = item.icon
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium ${
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium transition-colors ${
                     pathname === item.href
-                      ? "bg-primary text-white"
-                      : "text-gray-700 hover:bg-gray-100"
+                      ? "bg-secondary text-primary"
+                      : "text-gray-600 hover:bg-gray-50"
                   }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -192,10 +224,10 @@ export function NavBar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium ${
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium transition-colors ${
                     pathname === item.href
-                      ? "bg-primary text-white"
-                      : "text-gray-700 hover:bg-gray-100"
+                      ? "bg-secondary text-primary"
+                      : "text-gray-600 hover:bg-gray-50"
                   }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -204,11 +236,14 @@ export function NavBar() {
                 </Link>
               )
             })}
+
+            <div className="h-px bg-gray-100 my-2" />
+
             {user ? (
               <>
                 <Link
                   href={`/profile/${userData?.username || user.id}`}
-                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100"
+                  className="flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium text-gray-600 hover:bg-gray-50"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <User className="w-5 h-5" />
@@ -219,29 +254,33 @@ export function NavBar() {
                     handleLogout()
                     setMobileMenuOpen(false)
                   }}
-                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100 w-full text-left"
+                  className="flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium text-gray-600 hover:bg-gray-50 w-full text-left"
                 >
                   <LogOut className="w-5 h-5" />
                   <span>Sign out</span>
                 </button>
               </>
             ) : (
-              <>
+              <div className="grid grid-cols-2 gap-3 pt-2">
                 <Link
                   href="/login"
-                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100"
                   onClick={() => setMobileMenuOpen(false)}
+                  className="w-full"
                 >
-                  <span>Sign in</span>
+                  <Button variant="outline" className="w-full rounded-xl h-12 font-medium">
+                    Sign in
+                  </Button>
                 </Link>
                 <Link
                   href="/signup"
-                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100"
                   onClick={() => setMobileMenuOpen(false)}
+                  className="w-full"
                 >
-                  <span>Sign up</span>
+                  <Button className="w-full rounded-xl h-12 font-medium shadow-sm">
+                    Sign up
+                  </Button>
                 </Link>
-              </>
+              </div>
             )}
           </div>
         </div>
