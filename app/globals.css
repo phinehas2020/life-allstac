@@ -1,41 +1,43 @@
-@import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 43 33% 95%;
-    --foreground: 25 20% 15%;
+    /* Warm, nostalgic palette */
+    --background: 30 33% 98%; /* Cream/Off-white */
+    --foreground: 222.2 84% 4.9%;
 
-    --card: 43 33% 98%;
-    --card-foreground: 25 20% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
 
-    --popover: 43 33% 98%;
-    --popover-foreground: 25 20% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 180 30% 40%;
-    --primary-foreground: 43 33% 98%;
+    /* Deep Navy/Black for primary actions */
+    --primary: 220 30% 10%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 43 25% 90%;
-    --secondary-foreground: 180 30% 40%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 43 25% 90%;
-    --muted-foreground: 25 15% 45%;
+    --muted: 30 20% 94%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 45 80% 60%;
-    --accent-foreground: 25 20% 15%;
+    --accent: 35 80% 60%; /* Warm amber/orange accent */
+    --accent-foreground: 222.2 47.4% 11.2%;
 
-    --destructive: 0 70% 50%;
-    --destructive-foreground: 43 33% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 43 20% 85%;
-    --input: 43 20% 85%;
-    --ring: 180 30% 40%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
 
-    --radius: 0.5rem;
-    --font-nostalgic: "Permanent Marker", cursive;
+    --radius: 0.75rem; /* Rounder corners */
+
+    --font-heading: var(--font-space-grotesk);
+    --font-body: var(--font-dm-sans);
   }
 
   .dark {
@@ -133,9 +135,6 @@
 .masonry-item {
   break-inside: avoid;
   margin-bottom: 1.5rem;
-  transition: transform 0.2s ease;
-}
-
-.masonry-item:hover {
-    /* Handled in card component */
+  /* Removed transition: transform here to prevent layout glitching */
+  transform: translateZ(0); /* Hardware acceleration check */
 }
