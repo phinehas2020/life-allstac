@@ -166,9 +166,20 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
     }
   }
 
+  const [rotation, setRotation] = useState(0)
+
+  useEffect(() => {
+    setRotation(Math.random() * 4 - 2)
+  }, [])
+
   return (
-    <Card className="group border-0 shadow-md hover:shadow-xl transition-all duration-300 bg-card rounded-2xl overflow-hidden">
-      <div className="relative aspect-auto">
+    <Card
+      className="overflow-hidden group bg-white p-4 pb-2 shadow-lg rounded-lg transform transition-transform duration-300 hover:scale-105"
+      style={{
+        transform: `rotate(${rotation}deg)`,
+      }}
+    >
+      <div className="relative aspect-auto bg-gray-800">
         {post.type === "video" ? (
           <div className="relative">
             <video
@@ -207,9 +218,16 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
         )}
       </div>
 
-      <div className="p-4 space-y-3">
-        {/* User info - refined */}
-        <div className="flex items-center justify-between">
+      <div className="pt-4 space-y-3">
+        {/* Caption */}
+        {post.caption && (
+          <p className="text-lg text-center font-nostalgic text-gray-800 line-clamp-2 px-2">
+            {post.caption}
+          </p>
+        )}
+
+        {/* User info */}
+        <div className="flex items-center justify-between pt-2">
           <Link
             href={`/profile/${post.user?.username || post.user_id}`}
             className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
@@ -249,14 +267,7 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
           )}
         </div>
 
-        {/* Caption */}
-        {post.caption && (
-          <p className="text-sm text-foreground/90 leading-relaxed line-clamp-2 font-normal">
-            {post.caption}
-          </p>
-        )}
-
-        {/* Tags - pill style */}
+        {/* Tags */}
         {post.tags && post.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 pt-1">
             {post.tags.slice(0, 3).map((tag, index) => (
