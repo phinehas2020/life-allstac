@@ -207,11 +207,11 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="animate-pulse">
-          <div className="h-32 bg-gray-200 rounded-lg mb-8"></div>
-          <div className="grid grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-64 bg-gray-200 rounded-lg"></div>
+        <div className="animate-pulse space-y-8">
+          <div className="h-48 bg-muted/50 rounded-2xl mb-8"></div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="aspect-square bg-muted/50 rounded-xl"></div>
             ))}
           </div>
         </div>
@@ -221,10 +221,11 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-8 text-center">
-        <h1 className="text-2xl font-bold mb-4">User not found</h1>
+      <div className="max-w-7xl mx-auto px-4 py-24 text-center space-y-6">
+        <h1 className="text-3xl font-bold text-primary">User not found</h1>
+        <p className="text-muted-foreground">The user you are looking for doesn't exist or has moved.</p>
         <Link href="/">
-          <Button>Go Home</Button>
+          <Button size="lg" className="rounded-full">Go Home</Button>
         </Link>
       </div>
     )
@@ -233,80 +234,51 @@ export default function ProfilePage() {
   const isOwnProfile = currentUser?.id === user.id
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Profile Header */}
-      <Card className="mb-8">
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center space-x-6 mb-4 md:mb-0">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white font-bold text-3xl">
-                {user.username?.[0]?.toUpperCase() || "U"}
-              </div>
-              <div>
-                <div className="flex items-center space-x-3 mb-2">
-                  <h1 className="text-2xl font-bold">{user.username}</h1>
-                  {user.photographer_status === "approved" && (
-                    <PhotographerBadge
-                      influence={user.photographer_influence}
-                      accuracy={user.photographer_accuracy_percentage}
-                    />
-                  )}
-                </div>
-                {user.bio && <p className="text-gray-600 mb-3">{user.bio}</p>}
-                <div className="flex items-center space-x-6 text-sm">
-                  <div>
-                    <span className="font-bold">{posts.length}</span> posts
-                  </div>
-                  <div>
-                    <span className="font-bold">{followerCount}</span> followers
-                  </div>
-                  <div>
-                    <span className="font-bold">{followingCount}</span> following
-                  </div>
-                </div>
-                {user.photographer_status === "approved" && user.photographer_total_ratings > 0 && (
-                  <div className="mt-2 text-xs text-gray-600">
-                    {user.photographer_total_ratings} ratings • {user.photographer_accuracy_percentage.toFixed(0)}% accuracy
-                  </div>
-                )}
-              </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+      {/* Profile Header - Redesigned */}
+      <div className="mb-12 flex flex-col md:flex-row items-center md:items-start gap-8 md:gap-12">
+        {/* Avatar */}
+        <div className="flex-shrink-0">
+          <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-br from-primary to-primary/70 p-1 shadow-xl ring-4 ring-background">
+            <div className="w-full h-full rounded-full bg-background flex items-center justify-center overflow-hidden">
+              {user.avatar_url ? (
+                 <img src={user.avatar_url} alt={user.username || "User"} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-4xl md:text-5xl font-bold text-primary">
+                  {user.username?.[0]?.toUpperCase() || "U"}
+                </span>
+              )}
             </div>
+          </div>
+        </div>
 
-            <div className="space-y-2">
-              {isOwnProfile ? (
+        {/* Info */}
+        <div className="flex-1 text-center md:text-left space-y-4">
+          <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
+            <h1 className="text-3xl md:text-4xl font-bold font-heading text-primary">{user.username}</h1>
+            <div className="flex items-center gap-3">
+               {user.photographer_status === "approved" && (
+                  <PhotographerBadge
+                    influence={user.photographer_influence}
+                    accuracy={user.photographer_accuracy_percentage}
+                  />
+                )}
+               {isOwnProfile ? (
                 <>
                   <Link href="/settings">
-                    <Button variant="outline" className="w-full md:w-auto">
+                    <Button variant="outline" size="sm" className="rounded-full border-2 font-medium">
                       <Settings className="w-4 h-4 mr-2" />
-                      Edit Profile
+                      Edit
                     </Button>
                   </Link>
-                  {!user.photographer_status && (
-                    <Button 
-                      onClick={handleApplyPhotographer}
-                      variant="default"
-                      className="w-full md:w-auto"
-                    >
-                      <Camera className="w-4 h-4 mr-2" />
-                      Apply to Rate Photos
-                    </Button>
-                  )}
-                  {user.photographer_status === "pending" && (
-                    <div className="flex items-center space-x-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-lg text-sm">
-                      <Clock className="w-4 h-4 text-amber-600" />
-                      <span className="text-amber-700">Application Pending</span>
-                    </div>
-                  )}
-                  {user.photographer_status === "approved" && (
-                    <PhotographerBadge
-                      influence={user.photographer_influence}
-                      accuracy={user.photographer_accuracy_percentage}
-                      showStats
-                    />
-                  )}
                 </>
               ) : currentUser ? (
-                <Button onClick={handleFollow} variant={isFollowing ? "outline" : "default"}>
+                <Button
+                  onClick={handleFollow}
+                  variant={isFollowing ? "outline" : "default"}
+                  size="sm"
+                  className={`rounded-full font-medium ${isFollowing ? "border-2" : "shadow-md"}`}
+                >
                   {isFollowing ? (
                     <>
                       <UserMinus className="w-4 h-4 mr-2" />
@@ -321,7 +293,7 @@ export default function ProfilePage() {
                 </Button>
               ) : (
                 <Link href="/login">
-                  <Button>
+                  <Button size="sm" className="rounded-full shadow-md">
                     <UserPlus className="w-4 h-4 mr-2" />
                     Follow
                   </Button>
@@ -329,19 +301,74 @@ export default function ProfilePage() {
               )}
             </div>
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Stats */}
+          <div className="flex items-center justify-center md:justify-start gap-8 py-2">
+            <div className="text-center md:text-left">
+              <span className="block text-xl font-bold text-primary">{posts.length}</span>
+              <span className="text-sm text-muted-foreground font-medium">Posts</span>
+            </div>
+            <div className="text-center md:text-left">
+              <span className="block text-xl font-bold text-primary">{followerCount}</span>
+              <span className="text-sm text-muted-foreground font-medium">Followers</span>
+            </div>
+            <div className="text-center md:text-left">
+              <span className="block text-xl font-bold text-primary">{followingCount}</span>
+              <span className="text-sm text-muted-foreground font-medium">Following</span>
+            </div>
+          </div>
+
+          {/* Bio */}
+          <p className="text-base text-foreground/80 max-w-xl mx-auto md:mx-0 leading-relaxed">
+            {user.bio || "No bio yet."}
+          </p>
+
+          {/* Photographer Stats / Actions */}
+          <div className="pt-2 flex flex-wrap justify-center md:justify-start gap-3">
+            {isOwnProfile && !user.photographer_status && (
+                <Button
+                  onClick={handleApplyPhotographer}
+                  variant="secondary"
+                  size="sm"
+                  className="rounded-full"
+                >
+                  <Camera className="w-4 h-4 mr-2" />
+                  Apply to Rate
+                </Button>
+            )}
+            {isOwnProfile && user.photographer_status === "pending" && (
+              <div className="flex items-center space-x-2 px-4 py-1.5 bg-amber-50 border border-amber-200 rounded-full text-sm">
+                <Clock className="w-4 h-4 text-amber-600" />
+                <span className="text-amber-700 font-medium">Application Pending</span>
+              </div>
+            )}
+             {user.photographer_status === "approved" && user.photographer_total_ratings > 0 && (
+                  <div className="text-sm text-muted-foreground bg-secondary/50 px-3 py-1 rounded-full inline-block">
+                    Rated <strong>{user.photographer_total_ratings}</strong> photos • <strong>{user.photographer_accuracy_percentage.toFixed(0)}%</strong> accuracy
+                  </div>
+             )}
+          </div>
+        </div>
+      </div>
 
       {/* User's Posts */}
-      <div className="mb-4">
-        <h2 className="text-xl font-bold">Posts</h2>
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="text-2xl font-bold font-heading">Gallery</h2>
       </div>
 
       {posts.length > 0 ? (
-        <MediaGallery posts={posts} currentUserId={currentUser?.id} />
+        <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
+            <MediaGallery posts={posts} currentUserId={currentUser?.id} />
+        </div>
       ) : (
-        <div className="text-center py-12">
-          <p className="text-gray-500">No posts yet</p>
+        <div className="text-center py-20 bg-secondary/20 rounded-3xl border border-dashed border-border">
+          <div className="bg-background p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 shadow-sm">
+             <Camera className="w-8 h-8 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-semibold mb-1">No posts yet</h3>
+          <p className="text-muted-foreground max-w-xs mx-auto">
+            Once {user.username} shares some moments, they'll appear here.
+          </p>
         </div>
       )}
     </div>
