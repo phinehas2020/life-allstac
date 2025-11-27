@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -223,7 +224,7 @@ export default function ProfilePage() {
     return (
       <div className="max-w-7xl mx-auto px-4 py-24 text-center space-y-6">
         <h1 className="text-3xl font-bold text-primary">User not found</h1>
-        <p className="text-muted-foreground">The user you are looking for doesn't exist or has moved.</p>
+          <p className="text-muted-foreground">The user you are looking for doesn&apos;t exist or has moved.</p>
         <Link href="/">
           <Button size="lg" className="rounded-full">Go Home</Button>
         </Link>
@@ -242,7 +243,7 @@ export default function ProfilePage() {
           <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-br from-primary to-primary/70 p-1 shadow-xl ring-4 ring-background">
             <div className="w-full h-full rounded-full bg-background flex items-center justify-center overflow-hidden">
               {user.avatar_url ? (
-                 <img src={user.avatar_url} alt={user.username || "User"} className="w-full h-full object-cover" />
+                 <Image src={user.avatar_url} width={160} height={160} alt={user.username || "User"} className="w-full h-full object-cover" />
               ) : (
                 <span className="text-4xl md:text-5xl font-bold text-primary">
                   {user.username?.[0]?.toUpperCase() || "U"}
@@ -367,7 +368,7 @@ export default function ProfilePage() {
           </div>
           <h3 className="text-lg font-semibold mb-1">No posts yet</h3>
           <p className="text-muted-foreground max-w-xs mx-auto">
-            Once {user.username} shares some moments, they'll appear here.
+            Once {user.username} shares some moments, they&apos;ll appear here.
           </p>
         </div>
       )}
