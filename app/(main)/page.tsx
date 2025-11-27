@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { MediaGallery } from "@/components/media-gallery"
 import { Button } from "@/components/ui/button"
@@ -29,6 +29,7 @@ export default function HomePage() {
     } else if (activeTab === "following" && currentUser) {
       fetchFollowingPosts()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, currentUser])
 
   const getCurrentUser = async () => {
@@ -36,11 +37,27 @@ export default function HomePage() {
     setCurrentUser(user)
   }
 
-  const fetchPosts = async (loadMore = false) => {
+  // Helper function to format raw post data
+  const formatPosts = useCallback((data: any[]): PostWithUser[] => {
+    return data.map((post: any) => ({
+      ...post,
+      user: post.user,
+      likes: post.likes || [],
+      comments: post.comments || [],
+      events: post.post_events?.map((pe: any) => pe.event) || [],
+      _count: {
+        likes: post.likes?.length || 0,
+        comments: post.comments?.length || 0,
+        downloads: 0,
+      },
+    }))
+  }, [])
+
+  const fetchPosts = useCallback(async (loadMore = false) => {
     try {
       setLoading(true)
       const currentPage = loadMore ? page + 1 : 0
-      
+
       const { data, error } = await supabase
         .from("posts")
         .select(`
@@ -62,18 +79,7 @@ export default function HomePage() {
       }
 
       if (data) {
-        const formattedPosts: PostWithUser[] = data.map((post: any) => ({
-          ...post,
-          user: post.user,
-          likes: post.likes || [],
-          comments: post.comments || [],
-          events: post.post_events?.map((pe: any) => pe.event) || [],
-          _count: {
-            likes: post.likes?.length || 0,
-            comments: post.comments?.length || 0,
-            downloads: 0,
-          },
-        }))
+        const formattedPosts = formatPosts(data)
 
         if (loadMore) {
           setPosts((prev) => [...prev, ...formattedPosts])
@@ -88,9 +94,9 @@ export default function HomePage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [formatPosts, page, supabase])
 
-  const fetchFollowingPosts = async (loadMore = false) => {
+  const fetchFollowingPosts = useCallback(async (loadMore = false) => {
     if (!currentUser) return
 
     try {
@@ -98,10 +104,15 @@ export default function HomePage() {
       const currentPage = loadMore ? page + 1 : 0
 
       // Get users the current user follows
-      const { data: following } = await supabase
+      const { data: following, error: followError } = await supabase
         .from("follows")
         .select("following_id")
         .eq("follower_id", currentUser.id)
+
+      if (followError) {
+        console.error("Error fetching following list:", followError)
+        return
+      }
 
       if (!following || following.length === 0) {
         setFollowingPosts([])
@@ -109,7 +120,7 @@ export default function HomePage() {
         return
       }
 
-      const followingIds = following.map((f: any) => f.following_id)
+      const followingIds = following.map((f) => f.following_id)
 
       const { data, error } = await supabase
         .from("posts")
@@ -133,18 +144,7 @@ export default function HomePage() {
       }
 
       if (data) {
-        const formattedPosts: PostWithUser[] = data.map((post: any) => ({
-          ...post,
-          user: post.user,
-          likes: post.likes || [],
-          comments: post.comments || [],
-          events: post.post_events?.map((pe: any) => pe.event) || [],
-          _count: {
-            likes: post.likes?.length || 0,
-            comments: post.comments?.length || 0,
-            downloads: 0,
-          },
-        }))
+        const formattedPosts = formatPosts(data)
 
         if (loadMore) {
           setFollowingPosts((prev) => [...prev, ...formattedPosts])
@@ -159,7 +159,7 @@ export default function HomePage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentUser, formatPosts, page, supabase])
 
   const handleLoadMore = () => {
     if (activeTab === "everything") {

@@ -26,12 +26,30 @@ export async function GET(request: NextRequest) {
   const username = url.searchParams.get("username")
   const sort = (url.searchParams.get("sort") ?? "quality").toLowerCase()
 
+  // Validate view parameter
+  const validViews = ["everything", "following", "event", "user"]
+  if (!validViews.includes(view)) {
+    return jsonResponse(
+      { error: `Invalid view parameter. Must be one of: ${validViews.join(", ")}` },
+      { status: 400 },
+    )
+  }
+
+  // Validate sort parameter
+  const validSorts = ["quality", "latest"]
+  if (!validSorts.includes(sort)) {
+    return jsonResponse(
+      { error: `Invalid sort parameter. Must be one of: ${validSorts.join(", ")}` },
+      { status: 400 },
+    )
+  }
+
   const offsetStart = page * limit
   const offsetEnd = offsetStart + limit - 1
 
   let selection = POST_SELECTION
   let eventContext: Event | null = null
-  let postQuery = (supabase as any).from("posts")
+  let postQuery = supabase.from("posts")
 
   // Filter by view
   if (view === "following") {
@@ -42,7 +60,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const { data: followingRows, error: followingError } = await (supabase as any)
+    const { data: followingRows, error: followingError } = await supabase
       .from("follows")
       .select("following_id")
       .eq("follower_id", currentUser.id)
@@ -54,7 +72,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const followingIds = (followingRows ?? []).map((row: any) => row.following_id)
+    const followingIds = (followingRows ?? []).map((row) => row.following_id)
 
     if (followingIds.length === 0) {
       const emptyPayload: MobileFeedResponse = {
@@ -77,7 +95,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const { data: eventData, error: eventError } = await (supabase as any)
+    const { data: eventData, error: eventError } = await supabase
       .from("events")
       .select("*")
       .eq("slug", eventSlug)
@@ -101,7 +119,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const { data: userRecord, error: userError } = await (supabase as any)
+    const { data: userRecord, error: userError } = await supabase
       .from("users")
       .select("id")
       .eq("username", username)

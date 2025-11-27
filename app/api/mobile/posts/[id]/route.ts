@@ -15,7 +15,16 @@ export async function GET(
   const currentUser = await getUserFromRequest(supabase, request)
   const postId = params.id
 
-  const { data, error } = await (supabase as any)
+  // Validate post ID format (UUID)
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  if (!uuidRegex.test(postId)) {
+    return jsonResponse(
+      { error: "Invalid post ID format." },
+      { status: 400 },
+    )
+  }
+
+  const { data, error } = await supabase
     .from("posts")
     .select(POST_SELECTION)
     .eq("id", postId)
@@ -36,7 +45,7 @@ export async function GET(
   }
 
   // Fetch comments separately with full user data
-  const { data: commentsData } = await (supabase as any)
+  const { data: commentsData } = await supabase
     .from("comments")
     .select(`
       id,

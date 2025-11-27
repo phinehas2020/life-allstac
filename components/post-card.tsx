@@ -37,12 +37,13 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
     if (currentUserId) {
       checkPhotographerStatus()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUserId])
 
   const checkPhotographerStatus = async () => {
     if (!currentUserId) return
 
-    const { data: userData } = await (supabase as any)
+    const { data: userData } = await supabase
       .from("users")
       .select("photographer_status, photographer_influence")
       .eq("id", currentUserId)
@@ -53,7 +54,7 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
       setPhotographerInfluence(userData.photographer_influence || 1.0)
 
       // Check for existing rating
-      const { data: ratingData } = await (supabase as any)
+      const { data: ratingData } = await supabase
         .from("photo_ratings")
         .select("rating")
         .eq("user_id", currentUserId)
@@ -78,7 +79,7 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
     try {
       if (isLiked) {
         // Unlike
-        const { error } = await (supabase as any)
+        const { error } = await supabase
           .from("likes")
           .delete()
           .eq("user_id", currentUserId)
@@ -90,7 +91,7 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
         }
       } else {
         // Like
-        const { error } = await (supabase as any)
+        const { error } = await supabase
           .from("likes")
           .insert({ user_id: currentUserId, post_id: post.id })
 
@@ -105,6 +106,11 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
       }
     } catch (error) {
       console.error("Error updating like:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update like status",
+        variant: "destructive",
+      })
     }
   }
 
@@ -112,7 +118,7 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
     setDownloading(true)
     try {
       // Record download
-      await (supabase as any)
+      await supabase
         .from("downloads")
         .insert({ post_id: post.id, user_id: currentUserId })
 
@@ -133,6 +139,7 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
         description: "File downloaded successfully",
       })
     } catch (error) {
+      console.error("Error downloading file:", error)
       toast({
         title: "Error",
         description: "Failed to download file",
