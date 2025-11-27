@@ -12,6 +12,42 @@ import { useToast } from "@/lib/hooks/use-toast"
 import { Loader2 } from "lucide-react"
 import type { Event } from "@/lib/types/database"
 
+// Helper function to generate video thumbnail
+const generateVideoThumbnail = (file: File): Promise<Blob | null> => {
+  return new Promise((resolve) => {
+    const video = document.createElement("video")
+    video.preload = "metadata"
+    video.onloadedmetadata = () => {
+      // Seek to 1 second or 25% of duration if shorter
+      video.currentTime = Math.min(1, video.duration * 0.25)
+    }
+
+    video.onseeked = () => {
+      try {
+        const canvas = document.createElement("canvas")
+        canvas.width = video.videoWidth
+        canvas.height = video.videoHeight
+        const ctx = canvas.getContext("2d")
+        ctx?.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+        canvas.toBlob((blob) => {
+          window.URL.revokeObjectURL(video.src)
+          resolve(blob)
+        }, "image/jpeg", 0.7)
+      } catch (e) {
+        console.error("Error generating thumbnail", e)
+        resolve(null)
+      }
+    }
+
+    video.onerror = () => {
+      resolve(null)
+    }
+
+    video.src = URL.createObjectURL(file)
+  })
+}
+
 function UploadPageContent() {
   const [files, setFiles] = useState<File[]>([])
   const [caption, setCaption] = useState("")
@@ -29,6 +65,7 @@ function UploadPageContent() {
       .from("events")
       .select("*")
       .order("created_at", { ascending: false })
+      .limit(50) // Optimized: Limit to 50 recent events
 
     if (data && !error) {
       setEvents(data)
@@ -104,6 +141,32 @@ function UploadPageContent() {
         // Determine file type
         const type = file.type.startsWith("video/") ? "video" : "image"
 
+        let thumbnailPublicUrl = null
+
+        // Generate thumbnail for video
+        if (type === "video") {
+            try {
+                const thumbnailBlob = await generateVideoThumbnail(file)
+                if (thumbnailBlob) {
+                    const thumbFileName = `thumb-${fileName.replace(/\.[^/.]+$/, "")}.jpg`
+                    const thumbFilePath = `posts/${thumbFileName}`
+
+                    const { error: thumbError } = await supabase.storage
+                        .from("posts")
+                        .upload(thumbFilePath, thumbnailBlob)
+
+                    if (!thumbError) {
+                         const { data: { publicUrl: thumbUrl } } = supabase.storage
+                            .from("posts")
+                            .getPublicUrl(thumbFilePath)
+                        thumbnailPublicUrl = thumbUrl
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to generate/upload thumbnail", e)
+            }
+        }
+
         // Process tags and add event names as tags
         const tagsArray = tags
           .split(",")
@@ -123,6 +186,7 @@ function UploadPageContent() {
           .insert({
             user_id: user.id,
             media_url: publicUrl,
+            thumbnail_url: thumbnailPublicUrl,
             type,
             caption,
             tags: allTags,

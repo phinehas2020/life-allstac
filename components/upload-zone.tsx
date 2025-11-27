@@ -27,33 +27,40 @@ export function UploadZone({
   const [files, setFiles] = useState<File[]>([])
   const [errors, setErrors] = useState<string[]>([])
 
+  const validateFile = (file: File): Promise<{ file: File; error?: string }> => {
+    return new Promise((resolve) => {
+      if (file.type.startsWith("video/")) {
+        const video = document.createElement("video")
+        video.preload = "metadata"
+
+        video.onloadedmetadata = function () {
+          window.URL.revokeObjectURL(video.src)
+          // Increased limit to 60 seconds
+          if (video.duration > 60) {
+            resolve({ file, error: `${file.name} exceeds 60 seconds limit` })
+          } else {
+            resolve({ file })
+          }
+        }
+
+        video.onerror = function () {
+          window.URL.revokeObjectURL(video.src)
+          resolve({ file, error: `Failed to load video metadata for ${file.name}` })
+        }
+
+        video.src = URL.createObjectURL(file)
+      } else {
+        resolve({ file })
+      }
+    })
+  }
+
   const onDrop = useCallback(
-    (acceptedFiles: File[], rejectedFiles: any[]) => {
+    async (acceptedFiles: File[], rejectedFiles: any[]) => {
       setErrors([])
-      
-      // Validate video duration for video files
-      const validatedFiles: File[] = []
       const newErrors: string[] = []
 
-      acceptedFiles.forEach((file) => {
-        if (file.type.startsWith("video/")) {
-          const video = document.createElement("video")
-          video.preload = "metadata"
-          video.onloadedmetadata = function () {
-            window.URL.revokeObjectURL(video.src)
-            if (video.duration > 10) {
-              newErrors.push(`${file.name} exceeds 10 seconds limit`)
-            } else {
-              validatedFiles.push(file)
-            }
-          }
-          video.src = URL.createObjectURL(file)
-        } else {
-          validatedFiles.push(file)
-        }
-      })
-
-      // Handle rejected files
+      // Handle rejected files first
       rejectedFiles.forEach((rejection) => {
         const { file, errors } = rejection
         errors.forEach((error: any) => {
@@ -67,13 +74,25 @@ export function UploadZone({
         })
       })
 
-      setTimeout(() => {
-        setFiles(validatedFiles)
-        setErrors(newErrors)
-        if (validatedFiles.length > 0) {
-          onFilesSelected(validatedFiles)
+      // Validate accepted files (async)
+      const validationResults = await Promise.all(acceptedFiles.map(validateFile))
+
+      const validFiles: File[] = []
+
+      validationResults.forEach((result) => {
+        if (result.error) {
+          newErrors.push(result.error)
+        } else {
+          validFiles.push(result.file)
         }
-      }, 100)
+      })
+
+      setFiles(validFiles)
+      setErrors(newErrors)
+
+      if (validFiles.length > 0) {
+        onFilesSelected(validFiles)
+      }
     },
     [maxFiles, maxSize, onFilesSelected]
   )
@@ -115,7 +134,7 @@ export function UploadZone({
               Drag & drop files here, or click to select
             </p>
             <p className="text-sm text-gray-500">
-              Images (JPG, PNG, GIF, WebP) and Videos (MP4, MOV, max 10 seconds)
+              Images (JPG, PNG, GIF, WebP) and Videos (MP4, MOV, max 60 seconds)
             </p>
             <p className="text-sm text-gray-500 mt-1">
               Maximum {maxFiles} files, up to {maxSize / 1024 / 1024}MB each

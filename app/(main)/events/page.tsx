@@ -353,7 +353,7 @@ export default function EventsPage() {
           <p className="text-gray-500">No events created yet</p>
           {currentUser?.is_admin && (
             <p className="text-sm text-gray-400 mt-2">
-              Click "Create Event" to add your first event
+              Click &quot;Create Event&quot; to add your first event
             </p>
           )}
         </div>
