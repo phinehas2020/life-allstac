@@ -2,6 +2,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 import { formatDistanceToNow, format } from "date-fns"
+import type { User } from "@/lib/types/database"
 import {
   Card,
   CardContent,
@@ -44,7 +45,8 @@ export default async function AdminUsersPage({
     dbQuery = dbQuery.or(`username.ilike.%${query}%,email.ilike.%${query}%`)
   }
 
-  const { data: users, count, error } = await dbQuery
+  const { data, count, error } = await dbQuery
+  const users = data as User[] | null
 
   if (error) {
     console.error("Error fetching users:", error)
