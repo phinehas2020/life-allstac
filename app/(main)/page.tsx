@@ -170,34 +170,23 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-
-        {/* Hero / Welcome Section */}
-        <div className="mb-12 text-center max-w-2xl mx-auto space-y-4">
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-primary font-heading">
-            Life.Allstac
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground text-balance leading-relaxed">
-            A community-driven gallery of moments, memories, and visual stories.
-            Share yours today.
-          </p>
-        </div>
+    <div className="min-h-screen bg-background pb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 md:pt-10">
 
         {currentUser ? (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-            <div className="flex justify-center mb-8">
-              <TabsList className="bg-secondary/50 p-1 rounded-full border border-border/50 h-auto">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+            <div className="flex justify-center sticky top-4 z-40">
+              <TabsList className="bg-white/80 backdrop-blur-xl p-1.5 rounded-full border border-border/40 shadow-sm h-auto inline-flex">
                 <TabsTrigger
                   value="everything"
-                  className="rounded-full px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-300 font-medium flex items-center gap-2"
+                  className="rounded-full px-6 py-2.5 text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium flex items-center gap-2 hover:bg-secondary/50"
                 >
                   <Sparkles className="w-4 h-4" />
                   Discover
                 </TabsTrigger>
                 <TabsTrigger
                   value="following"
-                  className="rounded-full px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-300 font-medium flex items-center gap-2"
+                  className="rounded-full px-6 py-2.5 text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium flex items-center gap-2 hover:bg-secondary/50"
                 >
                   <Users className="w-4 h-4" />
                   Following
@@ -205,7 +194,7 @@ export default function HomePage() {
               </TabsList>
             </div>
 
-            <TabsContent value="everything" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <TabsContent value="everything" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500 focus-visible:outline-none focus-visible:ring-0">
               <MediaGallery
                 posts={posts}
                 currentUserId={currentUser?.id}
@@ -215,7 +204,7 @@ export default function HomePage() {
               />
             </TabsContent>
 
-            <TabsContent value="following" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <TabsContent value="following" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500 focus-visible:outline-none focus-visible:ring-0">
               <MediaGallery
                 posts={followingPosts}
                 currentUserId={currentUser?.id}
@@ -226,7 +215,7 @@ export default function HomePage() {
             </TabsContent>
           </Tabs>
         ) : (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pt-4">
              <MediaGallery
               posts={posts}
               loading={loading}

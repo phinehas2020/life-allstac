@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    /* Warm, nostalgic palette */
+    /* Warm, nostalgic palette - Refined for "Premium" feel */
     --background: 30 33% 98%; /* Cream/Off-white */
     --foreground: 222.2 84% 4.9%;
 
@@ -34,7 +34,7 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
 
-    --radius: 0.75rem; /* Rounder corners */
+    --radius: 1rem; /* More rounded */
 
     --font-heading: var(--font-space-grotesk);
     --font-body: var(--font-dm-sans);
@@ -79,6 +79,10 @@
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     font-family: var(--font-body);
+    /* Subtle grain/texture or just a smooth feeling */
+    background-image: radial-gradient(at 0% 0%, hsla(35, 100%, 96%, 0.3) 0px, transparent 50%),
+                      radial-gradient(at 100% 0%, hsla(210, 100%, 96%, 0.3) 0px, transparent 50%);
+    background-attachment: fixed;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -100,41 +104,12 @@
   .text-balance {
     text-wrap: balance;
   }
-}
 
-/* Masonry grid styles */
-.masonry {
-  column-count: 1;
-  column-gap: 1.5rem;
-}
-
-@media (min-width: 640px) {
-  .masonry {
-    column-count: 2;
+  .glass-panel {
+    @apply bg-white/70 backdrop-blur-lg border border-white/20 shadow-xl;
   }
-}
 
-@media (min-width: 768px) {
-  .masonry {
-    column-count: 3;
+  .dark .glass-panel {
+    @apply bg-black/70 border-white/10;
   }
-}
-
-@media (min-width: 1024px) {
-  .masonry {
-    column-count: 4;
-  }
-}
-
-@media (min-width: 1280px) {
-  .masonry {
-    column-count: 5;
-  }
-}
-
-.masonry-item {
-  break-inside: avoid;
-  margin-bottom: 1.5rem;
-  /* Removed transition: transform here to prevent layout glitching */
-  transform: translateZ(0); /* Hardware acceleration check */
 }

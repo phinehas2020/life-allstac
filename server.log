@@ -2,9 +2,16 @@
 > life.allstac@1.0.0 dev
 > next dev
 
- ⚠ Port 3000 is in use, trying 3001 instead.
   ▲ Next.js 14.2.5
-  - Local:        http://localhost:3001
+  - Local:        http://localhost:3000
   - Environments: .env.local
 
  ✓ Starting...
+ ✓ Ready in 3.4s
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 1067ms (157 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 7s (1025 modules)
+ GET / 200 in 7771ms
+ ✓ Compiled in 887ms (508 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (118kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
