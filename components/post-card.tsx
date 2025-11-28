@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
@@ -31,15 +31,9 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
   const [existingRating, setExistingRating] = useState<number | undefined>()
   const [ratingDialogOpen, setRatingDialogOpen] = useState(false)
   const { toast } = useToast()
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
-  useEffect(() => {
-    if (currentUserId) {
-      checkPhotographerStatus()
-    }
-  }, [currentUserId])
-
-  const checkPhotographerStatus = async () => {
+  const checkPhotographerStatus = useCallback(async () => {
     if (!currentUserId) return
 
     const { data: userData } = await (supabase as any)
@@ -64,7 +58,13 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
         setExistingRating(ratingData.rating)
       }
     }
-  }
+  }, [currentUserId, post.id, supabase])
+
+  useEffect(() => {
+    if (currentUserId) {
+      checkPhotographerStatus()
+    }
+  }, [currentUserId, checkPhotographerStatus])
 
   const handleLike = async () => {
     if (!currentUserId) {
@@ -176,12 +176,20 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
               src={post.media_url}
               className="w-full h-auto rounded-t-2xl"
               controls
+              playsInline
               preload="metadata"
+              poster={post.thumbnail_url || undefined}
             />
-            <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-sm text-white px-2 py-1 rounded-full flex items-center space-x-1">
-              <Play className="w-3 h-3" />
-              <span className="text-xs font-medium">Video</span>
-            </div>
+            {/* Remove overlay if playing? Native controls usually handle this.
+                Keeping the badge if not playing would require state, but native poster covers it mostly.
+                The previous Play icon badge is nice for indicating it's a video before interaction if autoplay is off.
+            */}
+            {!post.thumbnail_url && (
+                <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-sm text-white px-2 py-1 rounded-full flex items-center space-x-1 pointer-events-none">
+                <Play className="w-3 h-3" />
+                <span className="text-xs font-medium">Video</span>
+                </div>
+            )}
           </div>
         ) : (
           <Link href={`/post/${post.id}`} className="block relative">

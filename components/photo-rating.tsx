@@ -190,7 +190,7 @@ export function PhotoRating({
 
         {existingRating && (
           <p className="text-xs text-center text-gray-500">
-            You can update your rating until it's evaluated (7 days)
+            You can update your rating until it&apos;s evaluated (7 days)
           </p>
         )}
       </div>
