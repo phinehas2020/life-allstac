@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
@@ -31,7 +31,7 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
   const [existingRating, setExistingRating] = useState<number | undefined>()
   const [ratingDialogOpen, setRatingDialogOpen] = useState(false)
   const { toast } = useToast()
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const checkPhotographerStatus = useCallback(async () => {
     if (!currentUserId) return

@@ -6,6 +6,7 @@ import type { User } from "@/lib/types/database"
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Dashboard" },
+  { href: "/admin/users", label: "Users" },
   { href: "/admin/photographers", label: "Photographers" },
 ]
 
