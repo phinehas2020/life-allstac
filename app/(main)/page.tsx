@@ -173,17 +173,6 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
 
-        {/* Hero / Welcome Section */}
-        <div className="mb-12 text-center max-w-2xl mx-auto space-y-4">
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-primary font-heading">
-            Life.Allstac
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground text-balance leading-relaxed">
-            A community-driven gallery of moments, memories, and visual stories.
-            Share yours today.
-          </p>
-        </div>
-
         {currentUser ? (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
             <div className="flex justify-center mb-8">

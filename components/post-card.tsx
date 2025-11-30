@@ -245,7 +245,7 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
                   {post.user?.username || "Unknown User"}
                 </span>
                 {post.user?.photographer_status === "approved" && (
-                  <PhotographerBadge influence={post.user.photographer_influence} />
+                  <PhotographerBadge influence={post.user.photographer_influence} className="shrink-0" />
                 )}
               </div>
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium truncate">
