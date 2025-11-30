@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Home, Search, Upload, User, Calendar, LogOut, Menu, X, Trophy, Shield } from "lucide-react"
+import { Home, Search, Upload, User, Calendar, LogOut, Menu, X, Trophy, Shield, Bell } from "lucide-react"
 import { useEffect, useState } from "react"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 import type { User as UserData } from "@/lib/types/database"
@@ -12,6 +12,7 @@ import type { User as UserData } from "@/lib/types/database"
 export function NavBar() {
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [userData, setUserData] = useState<UserData | null>(null)
+  const [unreadCount, setUnreadCount] = useState(0)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const router = useRouter()
@@ -41,6 +42,15 @@ export function NavBar() {
         if (data) {
           setUserData(data)
         }
+
+        // Fetch unread notifications count
+        const { count } = await supabase
+          .from("notifications")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .eq("is_read", false)
+
+        setUnreadCount(count || 0)
       }
     }
 
@@ -52,11 +62,37 @@ export function NavBar() {
         getUser()
       } else {
         setUserData(null)
+        setUnreadCount(0)
       }
     })
 
     return () => subscription.unsubscribe()
   }, [supabase])
+
+  // Real-time subscription for notifications
+  useEffect(() => {
+    if (!user) return
+
+    const channel = supabase
+      .channel('nav-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`
+        },
+        () => {
+            setUnreadCount((prev) => prev + 1)
+        }
+      )
+      .subscribe()
+
+      return () => {
+          supabase.removeChannel(channel)
+      }
+  }, [supabase, user])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -143,6 +179,14 @@ export function NavBar() {
 
             {user ? (
               <>
+                <Link href="/notifications">
+                  <Button variant="ghost" size="icon" className="rounded-full w-10 h-10 hover:bg-secondary relative">
+                    <Bell className="w-5 h-5" />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                    )}
+                  </Button>
+                </Link>
                 <Link href={`/profile/${userData?.username || user.id}`}>
                   <Button variant="ghost" size="icon" className="rounded-full w-10 h-10 hover:bg-secondary">
                     <User className="w-5 h-5" />

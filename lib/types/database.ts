@@ -286,6 +286,37 @@ export interface Database {
           resolution?: string | null
         }
       }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          actor_id: string
+          type: 'like' | 'comment' | 'follow'
+          resource_id: string | null
+          content: string | null
+          is_read: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          actor_id: string
+          type: 'like' | 'comment' | 'follow'
+          resource_id?: string | null
+          content?: string | null
+          is_read?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          actor_id?: string
+          type?: 'like' | 'comment' | 'follow'
+          resource_id?: string | null
+          content?: string | null
+          is_read?: boolean
+        }
+      }
     }
     Views: {}
     Functions: {}
@@ -302,6 +333,7 @@ export type Comment = Database['public']['Tables']['comments']['Row']
 export type Follow = Database['public']['Tables']['follows']['Row']
 export type EventFollow = Database['public']['Tables']['event_follows']['Row']
 export type Download = Database['public']['Tables']['downloads']['Row']
+export type Notification = Database['public']['Tables']['notifications']['Row']
 
 // Extended types with relations
 export interface PostWithUser extends Post {
@@ -327,4 +359,9 @@ export interface EventWithPosts extends Event {
     posts: number
     followers: number
   }
+}
+
+export interface NotificationWithActor extends Notification {
+  actor: User
+  resource?: Post | null
 }
