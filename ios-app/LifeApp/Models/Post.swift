@@ -3,6 +3,7 @@
 //  LifeApp
 //
 //  Post model matching API response
+//  Updated for modern UI support
 //
 
 import Foundation
@@ -111,4 +112,3 @@ struct PostsResponse: Codable {
         pagination.hasMore
     }
 }
-

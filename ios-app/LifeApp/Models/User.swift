@@ -3,6 +3,7 @@
 //  LifeApp
 //
 //  User model matching API response
+//  Updated for modern UI support
 //
 
 import Foundation
@@ -90,4 +91,3 @@ struct UserProfile: Codable {
         recentPosts
     }
 }
-
