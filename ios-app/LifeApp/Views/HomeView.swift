@@ -2,109 +2,130 @@
 //  HomeView.swift
 //  LifeApp
 //
-//  Home feed view
+//  Main feed showing posts.
 //
 
 import SwiftUI
 
 struct HomeView: View {
-    @State private var posts: [Post] = []
-    @State private var isLoading = false
-    @State private var hasMore = true
-    @State private var page = 0
-    @State private var errorMessage: String?
+    @StateObject private var viewModel = HomeViewModel()
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                LazyVStack(spacing: 16) {
-                    if posts.isEmpty && !isLoading {
-                        VStack(spacing: 16) {
-                            Text("No posts yet")
-                                .foregroundColor(.secondary)
-                            if let error = errorMessage {
-                                Text(error)
-                                    .foregroundColor(.red)
-                                    .font(.caption)
+            ZStack {
+                Theme.background.ignoresSafeArea()
+
+                ScrollView {
+                    LazyVStack(spacing: 24) {
+                        // Header
+                        HStack {
+                            Text("The Who")
+                                .font(Theme.Fonts.heading())
+                                .foregroundColor(Theme.text)
+                            Spacer()
+                            Image(systemName: "bell")
+                                .font(.title2)
+                                .foregroundColor(Theme.text)
+                        }
+                        .padding(.horizontal)
+                        .padding(.top)
+
+                        // Feed
+                        if viewModel.isLoading && viewModel.posts.isEmpty {
+                            ProgressView()
+                                .padding(.top, 50)
+                        } else if viewModel.posts.isEmpty && !viewModel.isLoading {
+                            VStack(spacing: 16) {
+                                Image(systemName: "camera")
+                                    .font(.system(size: 48))
+                                    .foregroundColor(Theme.secondaryText)
+                                Text("No posts yet")
+                                    .font(Theme.Fonts.body())
+                                    .foregroundColor(Theme.secondaryText)
+                                Button("Refresh") {
+                                    Task { await viewModel.fetchPosts(refresh: true) }
+                                }
+                            }
+                            .padding(.top, 100)
+                        } else {
+                            ForEach(viewModel.posts) { post in
+                                PostCardView(post: post)
+                                    .onAppear {
+                                        if post.id == viewModel.posts.last?.id {
+                                            Task {
+                                                await viewModel.loadMore()
+                                            }
+                                        }
+                                    }
+                            }
+
+                            if viewModel.isLoading {
+                                ProgressView()
+                                    .padding()
                             }
                         }
-                        .padding()
                     }
-                    
-                    ForEach(posts) { post in
-                        PostCardView(post: post)
-                    }
-                    
-                    if isLoading {
-                        ProgressView()
-                            .padding()
-                    }
-                    
-                    if hasMore && !isLoading && !posts.isEmpty {
-                        Button("Load More") {
-                            loadMorePosts()
-                        }
-                        .padding()
-                    }
+                    .padding(.bottom, 20)
                 }
-                .padding()
-            }
-            .navigationTitle("Home")
-            .refreshable {
-                await loadPosts()
-            }
-            .task {
-                await loadPosts()
-            }
-        }
-    }
-    
-    private func loadPosts() async {
-        print("🏠 [HomeView] Loading posts...")
-        isLoading = true
-        errorMessage = nil
-        page = 0
-        
-        do {
-            let response = try await ApiService.shared.fetchPosts(limit: 20, page: page)
-            await MainActor.run {
-                posts = response.posts
-                hasMore = response.hasMore
-                isLoading = false
-                print("🏠 [HomeView] Loaded \(response.posts.count) posts")
-            }
-        } catch {
-            let errorMsg = error.localizedDescription
-            print("❌ [HomeView] Failed to load posts: \(errorMsg)")
-            await MainActor.run {
-                errorMessage = "Failed to load posts: \(errorMsg)"
-                isLoading = false
-            }
-        }
-    }
-    
-    private func loadMorePosts() {
-        Task {
-            page += 1
-            isLoading = true
-            
-            do {
-                let response = try await ApiService.shared.fetchPosts(limit: 20, page: page)
-                await MainActor.run {
-                    posts.append(contentsOf: response.posts)
-                    hasMore = response.hasMore
-                    isLoading = false
-                    print("🏠 [HomeView] Loaded \(response.posts.count) more posts")
+                .refreshable {
+                    await viewModel.fetchPosts(refresh: true)
                 }
-            } catch {
-                let errorMsg = error.localizedDescription
-                print("❌ [HomeView] Failed to load more posts: \(errorMsg)")
-                await MainActor.run {
-                    errorMessage = "Failed to load more: \(errorMsg)"
-                    isLoading = false
+            }
+            .navigationBarHidden(true)
+        }
+        .onAppear {
+            if viewModel.posts.isEmpty {
+                Task {
+                    await viewModel.fetchPosts()
                 }
             }
         }
     }
 }
 
+class HomeViewModel: ObservableObject {
+    @Published var posts: [Post] = []
+    @Published var isLoading = false
+    @Published var errorMessage: String?
+    @Published var hasMore = true
+    @Published var currentPage = 0
+    
+    func fetchPosts(refresh: Bool = false) async {
+        guard !isLoading else { return }
+
+        if refresh {
+            await MainActor.run {
+                self.currentPage = 0
+                self.hasMore = true
+                self.isLoading = true
+                self.errorMessage = nil
+            }
+        } else {
+            await MainActor.run { self.isLoading = true }
+        }
+        
+        do {
+            let response = try await ApiService.shared.fetchPosts(limit: 20, page: currentPage)
+            await MainActor.run {
+                if refresh {
+                    self.posts = response.posts
+                } else {
+                    self.posts.append(contentsOf: response.posts)
+                }
+                self.hasMore = response.hasMore
+                self.isLoading = false
+            }
+        } catch {
+            await MainActor.run {
+                self.errorMessage = error.localizedDescription
+                self.isLoading = false
+            }
+        }
+    }
+    
+    func loadMore() async {
+        guard hasMore && !isLoading else { return }
+        await MainActor.run { self.currentPage += 1 }
+        await fetchPosts()
+    }
+}

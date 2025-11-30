@@ -111,4 +111,3 @@ struct PostsResponse: Codable {
         pagination.hasMore
     }
 }
-

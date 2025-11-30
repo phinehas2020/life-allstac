@@ -17,82 +17,90 @@ struct AuthView: View {
     @State private var errorMessage: String?
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: 24) {
-                // Logo/Branding
-                VStack(spacing: 8) {
-                    Text("Life.")
-                        .font(.system(size: 48, weight: .bold))
-                        .foregroundColor(.primary)
+        ZStack {
+            Theme.background.ignoresSafeArea()
+
+            VStack(spacing: 30) {
+                // Header
+                VStack(spacing: 12) {
+                    Text("The Who")
+                        .font(Theme.Fonts.heading(size: 48))
+                        .foregroundColor(Theme.text)
+
+                    Text(isLoginMode ? "Welcome back" : "Join the community")
+                        .font(Theme.Fonts.body(size: 18))
+                        .foregroundColor(Theme.secondaryText)
                 }
                 .padding(.top, 60)
                 
-                // Form
-                VStack(spacing: 16) {
+                // Form Container
+                VStack(spacing: 20) {
                     if !isLoginMode {
-                        TextField("Username", text: $username)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .autocapitalization(.none)
+                        CustomTextField(placeholder: "Username", text: $username, icon: "person")
                     }
                     
-                    TextField("Email", text: $email)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .autocapitalization(.none)
+                    CustomTextField(placeholder: "Email", text: $email, icon: "envelope")
                         .keyboardType(.emailAddress)
-                        .autocorrectionDisabled()
+                        .autocapitalization(.none)
                     
-                    SecureField("Password", text: $password)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                    CustomSecureField(placeholder: "Password", text: $password)
                     
                     if let error = errorMessage {
                         Text(error)
                             .foregroundColor(.red)
-                            .font(.caption)
+                            .font(Theme.Fonts.caption())
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
                     }
                     
                     Button(action: handleAuth) {
-                        if isLoading {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                        } else {
-                            Text(isLoginMode ? "Log In" : "Sign Up")
-                                .fontWeight(.semibold)
+                        HStack {
+                            if isLoading {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            } else {
+                                Text(isLoginMode ? "Log In" : "Sign Up")
+                                    .font(Theme.Fonts.body(size: 18).weight(.bold))
+                            }
                         }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Theme.text)
+                        .foregroundColor(Theme.surface)
+                        .cornerRadius(12)
+                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 5)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
                     .disabled(isLoading || email.isEmpty || password.isEmpty)
-                    
-                    Button(action: {
-                        isLoginMode.toggle()
-                        errorMessage = nil
-                    }) {
-                        Text(isLoginMode ? "Don't have an account? Sign Up" : "Already have an account? Log In")
-                            .font(.caption)
-                            .foregroundColor(.blue)
-                    }
                 }
                 .padding(.horizontal, 32)
                 
                 Spacer()
+
+                // Toggle Mode
+                Button(action: {
+                    withAnimation {
+                        isLoginMode.toggle()
+                        errorMessage = nil
+                    }
+                }) {
+                    Text(isLoginMode ? "New here? Create account" : "Have an account? Log in")
+                        .font(Theme.Fonts.body())
+                        .foregroundColor(Theme.text)
+                        .underline()
+                }
+                .padding(.bottom, 40)
             }
         }
     }
     
     private func handleAuth() {
-        print("📱 [AuthView] handleAuth called - isLoginMode: \(isLoginMode)")
         isLoading = true
         errorMessage = nil
         
         Task {
             do {
                 if isLoginMode {
-                    print("📱 [AuthView] Attempting login...")
                     try await authManager.login(email: email, password: password)
-                    print("📱 [AuthView] Login successful!")
                 } else {
                     guard !username.isEmpty else {
                         await MainActor.run {
@@ -101,27 +109,11 @@ struct AuthView: View {
                         }
                         return
                     }
-                    print("📱 [AuthView] Attempting signup...")
                     try await authManager.signup(email: email, password: password, username: username)
-                    print("📱 [AuthView] Signup successful!")
                 }
             } catch {
-                let errorDescription = error.localizedDescription
-                print("❌ [AuthView] Authentication error: \(errorDescription)")
-                if let apiError = error as? ApiError {
-                    switch apiError {
-                    case .invalidURL:
-                        print("❌ [AuthView] Invalid URL - check SupabaseConfig")
-                    case .invalidResponse:
-                        print("❌ [AuthView] Invalid response from server")
-                    case .httpError(let code):
-                        print("❌ [AuthView] HTTP error code: \(code)")
-                    case .decodingError(let err):
-                        print("❌ [AuthView] Decoding error: \(err.localizedDescription)")
-                    }
-                }
                 await MainActor.run {
-                    errorMessage = "Authentication failed: \(errorDescription)"
+                    errorMessage = error.localizedDescription
                     isLoading = false
                 }
             }
@@ -129,3 +121,43 @@ struct AuthView: View {
     }
 }
 
+// MARK: - Custom Components
+
+struct CustomTextField: View {
+    var placeholder: String
+    @Binding var text: String
+    var icon: String
+
+    var body: some View {
+        HStack {
+            Image(systemName: icon)
+                .foregroundColor(Theme.secondaryText)
+                .frame(width: 20)
+            TextField(placeholder, text: $text)
+                .foregroundColor(Theme.text)
+        }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 2)
+    }
+}
+
+struct CustomSecureField: View {
+    var placeholder: String
+    @Binding var text: String
+
+    var body: some View {
+        HStack {
+            Image(systemName: "lock")
+                .foregroundColor(Theme.secondaryText)
+                .frame(width: 20)
+            SecureField(placeholder, text: $text)
+                .foregroundColor(Theme.text)
+        }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 2)
+    }
+}
