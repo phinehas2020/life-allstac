@@ -7,6 +7,7 @@ import { UploadZone } from "@/components/upload-zone"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Progress } from "@/components/ui/progress"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/lib/hooks/use-toast"
 import { Loader2 } from "lucide-react"
@@ -55,6 +56,7 @@ function UploadPageContent() {
   const [selectedEvents, setSelectedEvents] = useState<string[]>([])
   const [events, setEvents] = useState<Event[]>([])
   const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
@@ -105,6 +107,7 @@ function UploadPageContent() {
     }
 
     setUploading(true)
+    setUploadProgress(0)
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -214,6 +217,12 @@ function UploadPageContent() {
           }
         }
 
+        // Update progress
+        setUploadProgress((prev) => {
+          const newProgress = prev + (100 / files.length)
+          return Math.min(newProgress, 100)
+        })
+
         return postData
       })
 
@@ -301,21 +310,33 @@ function UploadPageContent() {
                 </div>
               )}
 
-              <Button
-                onClick={handleUpload}
-                disabled={uploading}
-                className="w-full"
-                size="lg"
-              >
-                {uploading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  `Upload ${files.length} ${files.length === 1 ? "File" : "Files"}`
+              <div className="space-y-4">
+                {uploading && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm text-gray-500">
+                      <span>Uploading...</span>
+                      <span>{Math.round(uploadProgress)}%</span>
+                    </div>
+                    <Progress value={uploadProgress} className="h-2" />
+                  </div>
                 )}
-              </Button>
+
+                <Button
+                  onClick={handleUpload}
+                  disabled={uploading}
+                  className="w-full"
+                  size="lg"
+                >
+                  {uploading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    `Upload ${files.length} ${files.length === 1 ? "File" : "Files"}`
+                  )}
+                </Button>
+              </div>
             </>
           )}
         </CardContent>
