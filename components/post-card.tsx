@@ -168,7 +168,7 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
 
   return (
     /* Removed transition-all from the card container to fix flickering/glitching in masonry layouts */
-    <Card className="group border-0 shadow-sm hover:shadow-lg transition-shadow duration-300 bg-card rounded-2xl overflow-hidden">
+    <Card className="group border-0 shadow-sm hover:shadow-lg transition-shadow duration-300 bg-card rounded-2xl overflow-hidden w-full">
       <div className="relative aspect-auto">
         {post.type === "video" ? (
           <div className="relative">
