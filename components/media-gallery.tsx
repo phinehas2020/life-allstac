@@ -95,9 +95,9 @@ export function MediaGallery({
 
   return (
     <>
-      <div className="flex gap-4 md:gap-6 items-start w-full">
+      <div className="flex gap-6 items-start">
         {columns.map((colPosts, colIndex) => (
-          <div key={colIndex} className="flex-1 min-w-0 flex flex-col gap-4 md:gap-6">
+          <div key={colIndex} className="flex-1 flex flex-col gap-6">
             {colPosts.map((post) => (
               <div key={post.id} className="w-full">
                  <PostCard
