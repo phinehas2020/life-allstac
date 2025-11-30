@@ -168,7 +168,7 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
 
   return (
     /* Removed transition-all from the card container to fix flickering/glitching in masonry layouts */
-    <Card className="group border-0 shadow-sm hover:shadow-lg transition-shadow duration-300 bg-card rounded-2xl overflow-hidden">
+    <Card className="group border-0 shadow-sm hover:shadow-lg transition-shadow duration-300 bg-card rounded-2xl overflow-hidden w-full">
       <div className="relative aspect-auto">
         {post.type === "video" ? (
           <div className="relative">
@@ -245,7 +245,7 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
                   {post.user?.username || "Unknown User"}
                 </span>
                 {post.user?.photographer_status === "approved" && (
-                  <PhotographerBadge influence={post.user.photographer_influence} />
+                  <PhotographerBadge influence={post.user.photographer_influence} className="shrink-0" />
                 )}
               </div>
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium truncate">
