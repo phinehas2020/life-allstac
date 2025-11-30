@@ -15,100 +15,133 @@ struct ProfileView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                if let profile = profile {
-                    VStack(spacing: 24) {
-                        // Profile header
-                        VStack(spacing: 12) {
-                            // Avatar
-                            Circle()
-                                .fill(Color.blue.opacity(0.3))
-                                .frame(width: 80, height: 80)
-                                .overlay(
-                                    Text(profile.user.username ?? profile.user.id.prefix(1).uppercased())
-                                        .font(.title)
-                                        .foregroundColor(.blue)
-                                )
-                            
-                            Text(profile.user.username ?? "User")
-                                .font(.title2)
-                                .fontWeight(.semibold)
-                            
-                            if let bio = profile.user.bio {
-                                Text(bio)
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                                    .multilineTextAlignment(.center)
-                            }
-                            
-                            // Stats
-                            HStack(spacing: 24) {
-                                StatView(value: "\(profile.stats.posts)", label: "Posts")
-                                StatView(value: "\(profile.stats.followers)", label: "Followers")
-                                StatView(value: "\(profile.stats.following)", label: "Following")
-                            }
-                        }
-                        .padding()
-                        
-                        // Posts grid
-                        LazyVGrid(columns: [
-                            GridItem(.flexible()),
-                            GridItem(.flexible()),
-                            GridItem(.flexible())
-                        ], spacing: 2) {
-                            ForEach(profile.recentPosts) { post in
-                                NavigationLink(destination: PostDetailView(postId: post.id)) {
-                                    AsyncImage(url: URL(string: post.mediaUrl)) { phase in
-                                        switch phase {
-                                        case .empty:
-                                            ProgressView()
-                                                .frame(width: 120, height: 120)
-                                        case .success(let image):
-                                            image
-                                                .resizable()
-                                                .aspectRatio(contentMode: .fill)
-                                        case .failure:
-                                            Rectangle()
-                                                .fill(Color.gray.opacity(0.3))
-                                        @unknown default:
-                                            EmptyView()
+            ZStack {
+                Theme.background.ignoresSafeArea()
+
+                ScrollView {
+                    if let profile = profile {
+                        VStack(spacing: 24) {
+                            // Profile header
+                            VStack(spacing: 12) {
+                                // Avatar
+                                Circle()
+                                    .fill(Color.gray.opacity(0.1))
+                                    .frame(width: 100, height: 100)
+                                    .overlay(
+                                        Group {
+                                            if let avatarUrl = profile.userModel.avatar_url, let url = URL(string: avatarUrl) {
+                                                AsyncImage(url: url) { image in
+                                                    image.resizable().aspectRatio(contentMode: .fill)
+                                                } placeholder: {
+                                                    Text(profile.userModel.displayName.prefix(1).uppercased())
+                                                }
+                                            } else {
+                                                Text(profile.userModel.displayName.prefix(1).uppercased())
+                                                    .font(Theme.Fonts.heading(size: 32))
+                                                    .foregroundColor(Theme.secondaryText)
+                                            }
                                         }
+                                    )
+                                    .clipShape(Circle())
+                                    .shadow(color: Color.black.opacity(0.1), radius: 5)
+
+                                Text(profile.userModel.displayName)
+                                    .font(Theme.Fonts.heading(size: 24))
+                                    .foregroundColor(Theme.text)
+
+                                if let bio = profile.userModel.bio {
+                                    Text(bio)
+                                        .font(Theme.Fonts.body())
+                                        .foregroundColor(Theme.secondaryText)
+                                        .multilineTextAlignment(.center)
+                                        .padding(.horizontal)
+                                }
+
+                                // Stats
+                                HStack(spacing: 40) {
+                                    StatView(value: "\(profile.stats.posts)", label: "Posts")
+                                    StatView(value: "\(profile.stats.followers)", label: "Followers")
+                                    StatView(value: "\(profile.stats.following)", label: "Following")
+                                }
+                                .padding(.top, 8)
+                            }
+                            .padding()
+                            
+                            // Posts grid
+                            LazyVGrid(columns: [
+                                GridItem(.flexible(), spacing: 2),
+                                GridItem(.flexible(), spacing: 2),
+                                GridItem(.flexible(), spacing: 2)
+                            ], spacing: 2) {
+                                ForEach(profile.recentPosts) { post in
+                                    NavigationLink(destination: PostDetailView(postId: post.id)) {
+                                        AsyncImage(url: URL(string: post.mediaUrl)) { phase in
+                                            switch phase {
+                                            case .empty:
+                                                Rectangle()
+                                                    .fill(Theme.background)
+                                                    .aspectRatio(1, contentMode: .fill)
+                                            case .success(let image):
+                                                image
+                                                    .resizable()
+                                                    .aspectRatio(contentMode: .fill)
+                                                    .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+                                                    .clipped()
+                                            case .failure:
+                                                Rectangle()
+                                                    .fill(Color.gray.opacity(0.1))
+                                                    .aspectRatio(1, contentMode: .fill)
+                                            @unknown default:
+                                                EmptyView()
+                                            }
+                                        }
+                                        .aspectRatio(1, contentMode: .fit)
                                     }
-                                    .frame(width: 120, height: 120)
-                                    .clipped()
                                 }
                             }
                         }
-                    }
-                } else if isLoading {
-                    ProgressView()
-                        .padding()
-                } else {
-                    VStack(spacing: 16) {
-                        Text("Failed to load profile")
-                            .foregroundColor(.secondary)
-                        if let error = errorMessage {
-                            Text(error)
-                                .foregroundColor(.red)
-                                .font(.caption)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal)
-                        }
-                        Button("Retry") {
-                            Task {
-                                await loadProfile()
+                    } else if isLoading {
+                        ProgressView()
+                            .padding(.top, 50)
+                    } else {
+                        VStack(spacing: 16) {
+                            Text("Failed to load profile")
+                                .font(Theme.Fonts.body())
+                                .foregroundColor(Theme.secondaryText)
+
+                            if let error = errorMessage {
+                                Text(error)
+                                    .foregroundColor(.red)
+                                    .font(Theme.Fonts.caption())
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal)
+                            }
+
+                            Button(action: {
+                                Task {
+                                    await loadProfile()
+                                }
+                            }) {
+                                Text("Retry")
+                                    .font(Theme.Fonts.body().weight(.semibold))
+                                    .padding()
+                                    .background(Theme.text)
+                                    .foregroundColor(Theme.surface)
+                                    .cornerRadius(8)
                             }
                         }
-                        .buttonStyle(.borderedProminent)
+                        .padding(.top, 50)
                     }
-                    .padding()
                 }
-            }
-            .navigationTitle("Profile")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Logout") {
-                        authManager.logout()
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(action: {
+                            authManager.logout()
+                        }) {
+                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                                .foregroundColor(Theme.text)
+                        }
                     }
                 }
             }
@@ -143,18 +176,6 @@ struct ProfileView: View {
         } catch {
             let errorMsg = error.localizedDescription
             print("❌ [ProfileView] Failed to load profile: \(errorMsg)")
-            if let apiError = error as? ApiError {
-                switch apiError {
-                case .invalidURL:
-                    print("❌ [ProfileView] Invalid URL")
-                case .invalidResponse:
-                    print("❌ [ProfileView] Invalid response")
-                case .httpError(let code):
-                    print("❌ [ProfileView] HTTP error: \(code)")
-                case .decodingError(let err):
-                    print("❌ [ProfileView] Decoding error: \(err.localizedDescription)")
-                }
-            }
             await MainActor.run {
                 isLoading = false
                 errorMessage = "Failed to load: \(errorMsg)"
@@ -170,11 +191,11 @@ struct StatView: View {
     var body: some View {
         VStack(spacing: 4) {
             Text(value)
-                .font(.headline)
+                .font(Theme.Fonts.heading(size: 20))
+                .foregroundColor(Theme.text)
             Text(label)
-                .font(.caption)
-                .foregroundColor(.secondary)
+                .font(Theme.Fonts.caption())
+                .foregroundColor(Theme.secondaryText)
         }
     }
 }
-

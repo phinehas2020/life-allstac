@@ -90,4 +90,3 @@ struct UserProfile: Codable {
         recentPosts
     }
 }
-
