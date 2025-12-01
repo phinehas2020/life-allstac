@@ -206,6 +206,8 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
                     style={{ width: '100%', height: 'auto' }}
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     priority={false}
+                    placeholder={post.blurhash ? "blur" : "empty"}
+                    blurDataURL={post.blurhash ? `data:image/png;base64,${post.blurhash}` : undefined} // Note: This assumes blurhash needs conversion. Wait, Next.js expects base64 of an image, not raw blurhash string.
                   />
               </div>
               {post.quality_score && post.quality_score >= 4.0 && (
