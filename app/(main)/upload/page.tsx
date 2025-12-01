@@ -12,6 +12,34 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/lib/hooks/use-toast"
 import { Loader2 } from "lucide-react"
 import type { Event } from "@/lib/types/database"
+import imageCompression from 'browser-image-compression';
+import { encode } from 'blurhash';
+
+const generateBlurHash = async (file: File): Promise<string | null> => {
+  return new Promise((resolve) => {
+    const img = document.createElement("img");
+    img.src = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(img, 0, 0);
+        const imageData = ctx.getImageData(0, 0, img.width, img.height);
+        const hash = encode(imageData.data, imageData.width, imageData.height, 4, 4);
+        resolve(hash);
+      } else {
+        resolve(null);
+      }
+      URL.revokeObjectURL(img.src);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(img.src);
+      resolve(null);
+    };
+  });
+};
 
 // Helper function to generate video thumbnail
 const generateVideoThumbnail = (file: File): Promise<Blob | null> => {
@@ -122,6 +150,41 @@ function UploadPageContent() {
       }
 
       const uploadPromises = files.map(async (file) => {
+        let fileToUpload = file;
+        let blurhash = null;
+
+        // Determine file type
+        const type = file.type.startsWith("video/") ? "video" : "image";
+
+        if (type === "video") {
+           // Double check duration server/upload-side logic if needed, but client side check is in UploadZone.
+           // However, to be safe and robust (and prevent programmatic bypass), we can re-verify here if we had access to duration.
+           // Since we can't easily get duration from File object here without loading it into video element again (which is slow),
+           // we rely on UploadZone validation.
+           // But we can check file size.
+           if (file.size > 50 * 1024 * 1024) {
+             throw new Error(`Video ${file.name} is too large (max 50MB)`);
+           }
+        }
+
+        if (type === "image") {
+          try {
+            // Generate blurhash before compression (better quality source)
+            blurhash = await generateBlurHash(file);
+
+            // Compress image
+            const options = {
+              maxSizeMB: 1,
+              maxWidthOrHeight: 1920,
+              useWebWorker: true,
+            };
+            fileToUpload = await imageCompression(file, options);
+          } catch (error) {
+            console.error("Error compressing image:", error);
+            // Fallback to original file
+          }
+        }
+
         // Generate unique filename
         const fileExt = file.name.split(".").pop()
         const fileName = `${user.id}-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
@@ -130,7 +193,7 @@ function UploadPageContent() {
         // Upload to Supabase Storage
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from("posts")
-          .upload(filePath, file)
+          .upload(filePath, fileToUpload)
 
         if (uploadError) {
           throw uploadError
@@ -140,9 +203,6 @@ function UploadPageContent() {
         const { data: { publicUrl } } = supabase.storage
           .from("posts")
           .getPublicUrl(filePath)
-
-        // Determine file type
-        const type = file.type.startsWith("video/") ? "video" : "image"
 
         let thumbnailPublicUrl = null
 
@@ -193,6 +253,7 @@ function UploadPageContent() {
             type,
             caption,
             tags: allTags,
+            blurhash,
           } as any)
           .select()
           .single()

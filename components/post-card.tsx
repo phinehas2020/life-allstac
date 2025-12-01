@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { Blurhash } from "react-blurhash"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -196,16 +197,29 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
             <div className="relative overflow-hidden bg-gray-100">
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors z-10 duration-300" />
               {/* Added translate-z-0 to image container to prevent repaint glitches */}
-              <div className="transform-gpu">
+              <div className="transform-gpu relative">
+                  {post.blurhash && (
+                    <div className="absolute inset-0 z-0">
+                      <Blurhash
+                        hash={post.blurhash}
+                        width="100%"
+                        height="100%"
+                        resolutionX={32}
+                        resolutionY={32}
+                        punch={1}
+                      />
+                    </div>
+                  )}
                   <Image
                     src={post.media_url}
                     alt={post.caption || "User uploaded content"}
                     width={600}
                     height={800}
-                    className="w-full h-auto transition-transform duration-500 group-hover:scale-105 object-cover will-change-transform"
+                    className={`w-full h-auto transition-transform duration-500 group-hover:scale-105 object-cover will-change-transform ${post.blurhash ? 'relative z-10' : ''}`}
                     style={{ width: '100%', height: 'auto' }}
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
                     priority={false}
+                    placeholder="empty"
                   />
               </div>
               {post.quality_score && post.quality_score >= 4.0 && (
