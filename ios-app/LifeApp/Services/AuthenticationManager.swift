@@ -18,6 +18,13 @@ class AuthenticationManager: ObservableObject {
         checkAuthenticationStatus()
     }
     
+    /// Verify if we already have a valid session and hydrate state accordingly.
+    @MainActor
+    func checkSession() async {
+        print("🔍 [AuthManager] Checking existing session...")
+        checkAuthenticationStatus()
+    }
+    
     func checkAuthenticationStatus() {
         if let token = tokenManager.getAccessToken(), !token.isEmpty {
             isAuthenticated = true
@@ -163,4 +170,3 @@ class AuthenticationManager: ObservableObject {
         print("🔑 [AuthManager] Logout complete")
     }
 }
-

@@ -26,6 +26,9 @@
 		A1000001294A000000000039 /* RatingSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001294A00000000003A /* RatingSheetView.swift */; };
 		A1000001294A000000000037 /* ImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001294A000000000038 /* ImageLoader.swift */; };
 		A1000001294A000000000033 /* SupabaseConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001294A000000000034 /* SupabaseConfig.swift */; };
+		A1000001294A00000000003B /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001294A00000000003C /* Theme.swift */; };
+		A1000001294A00000000003D /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001294A00000000003E /* MainTabView.swift */; };
+		A1000001294A00000000003F /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001294A000000000040 /* VideoPlayerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -49,6 +52,9 @@
 		A1000001294A000000000038 /* ImageLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageLoader.swift; sourceTree = "<group>"; };
 		A1000001294A000000000020 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A1000001294A000000000034 /* SupabaseConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseConfig.swift; sourceTree = "<group>"; };
+		A1000001294A00000000003C /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		A1000001294A00000000003E /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		A1000001294A000000000040 /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
 		A1000001294A000000000021 /* LifeApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LifeApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -126,6 +132,9 @@
 				A1000001294A00000000001E /* PostDetailView.swift */,
 				A1000001294A000000000036 /* PostImageView.swift */,
 				A1000001294A00000000003A /* RatingSheetView.swift */,
+				A1000001294A00000000003E /* MainTabView.swift */,
+				A1000001294A00000000003C /* Theme.swift */,
+				A1000001294A000000000040 /* VideoPlayerView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -212,6 +221,9 @@
 				A1000001294A000000000035 /* PostImageView.swift in Sources */,
 				A1000001294A000000000039 /* RatingSheetView.swift in Sources */,
 				A1000001294A000000000033 /* SupabaseConfig.swift in Sources */,
+				A1000001294A00000000003B /* Theme.swift in Sources */,
+				A1000001294A00000000003D /* MainTabView.swift in Sources */,
+				A1000001294A00000000003F /* VideoPlayerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
