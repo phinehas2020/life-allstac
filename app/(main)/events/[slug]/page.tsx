@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import EventDetailClient from './event-detail-client'
+import { Event } from '@/lib/types/database'
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -13,11 +14,13 @@ export async function generateMetadata(
   const supabase = await createServerSupabaseClient()
 
   // Fetch the event to get details
-  const { data: event } = await supabase
+  const { data } = await supabase
     .from('events')
     .select('*')
     .eq('slug', slug)
     .single()
+
+  const event = data as Event | null
 
   if (!event) {
     return {

@@ -28,16 +28,19 @@ export default function EventDetailPage() {
   const slug = params.slug as string
 
   useEffect(() => {
-    getCurrentUser()
-    fetchEvent()
+    const init = async () => {
+      // 1. Get user first
+      const { data: { user } } = await supabase.auth.getUser()
+      setCurrentUser(user)
+
+      // 2. Then fetch event and status
+      await fetchEvent(user)
+    }
+
+    init()
   }, [slug])
 
-  const getCurrentUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    setCurrentUser(user)
-  }
-
-  const fetchEvent = async () => {
+  const fetchEvent = async (user: SupabaseUser | null) => {
     try {
       setLoading(true)
 
@@ -86,11 +89,11 @@ export default function EventDetailPage() {
       }
 
       // Check if user is following this event
-      if (currentUser) {
+      if (user) {
         const { data: followData } = await supabase
           .from("event_follows")
           .select("*")
-          .eq("user_id", currentUser.id)
+          .eq("user_id", user.id)
           .eq("event_id", eventData.id)
           .single()
 
