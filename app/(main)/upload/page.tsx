@@ -35,7 +35,6 @@ const generateBlurHash = async (file: File): Promise<string | null> => {
       URL.revokeObjectURL(img.src);
     };
     img.onerror = () => {
-      URL.revokeObjectURL(img.src);
       resolve(null);
     };
   });
@@ -155,17 +154,6 @@ function UploadPageContent() {
 
         // Determine file type
         const type = file.type.startsWith("video/") ? "video" : "image";
-
-        if (type === "video") {
-           // Double check duration server/upload-side logic if needed, but client side check is in UploadZone.
-           // However, to be safe and robust (and prevent programmatic bypass), we can re-verify here if we had access to duration.
-           // Since we can't easily get duration from File object here without loading it into video element again (which is slow),
-           // we rely on UploadZone validation.
-           // But we can check file size.
-           if (file.size > 50 * 1024 * 1024) {
-             throw new Error(`Video ${file.name} is too large (max 50MB)`);
-           }
-        }
 
         if (type === "image") {
           try {
