@@ -121,6 +121,7 @@ export default function SessionManagePage() {
     try {
       const { error } = await supabase
         .from("sessions")
+        // @ts-ignore
         .update({ password_hash: newPassword })
         .eq("id", selectedSession.id)
 
