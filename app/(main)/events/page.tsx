@@ -7,10 +7,12 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Calendar, Users, Image as ImageIcon, Plus, Edit, Trash2 } from "lucide-react"
+import { Calendar, Users, Image as ImageIcon, Plus, Edit, Trash2, Flag } from "lucide-react"
 import { formatDistanceToNow, format } from "date-fns"
 import { useToast } from "@/lib/hooks/use-toast"
 import type { Event, User } from "@/lib/types/database"
+import { Switch } from "@/components/ui/switch"
+import { cn } from "@/lib/utils/cn"
 
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([])
@@ -22,6 +24,7 @@ export default function EventsPage() {
     description: "",
     start_date: "",
     end_date: "",
+    is_request: false
   })
   const { toast } = useToast()
   const supabase = createClient()
@@ -105,6 +108,7 @@ export default function EventsPage() {
           start_date: formData.start_date || null,
           end_date: formData.end_date || null,
           created_by: currentUser.id,
+          type: formData.is_request ? 'request' : 'event'
         }] as any)
         .select()
         .single()
@@ -130,6 +134,7 @@ export default function EventsPage() {
           description: "",
           start_date: "",
           end_date: "",
+          is_request: false
         })
         toast({
           title: "Success",
@@ -192,15 +197,15 @@ export default function EventsPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Events</h1>
-          <p className="text-gray-600">
-            Browse and join community events
+          <h1 className="text-3xl font-bold font-heading mb-2">Events & Requests</h1>
+          <p className="text-muted-foreground">
+            Browse and join community events or fulfill requests
           </p>
         </div>
         {currentUser?.is_admin && (
           <Button onClick={() => setShowCreateForm(!showCreateForm)}>
             <Plus className="w-4 h-4 mr-2" />
-            Create Event
+            Create Event/Request
           </Button>
         )}
       </div>
@@ -210,7 +215,7 @@ export default function EventsPage() {
           <CardHeader>
             <CardTitle>Create New Event</CardTitle>
             <CardDescription>
-              Create a new event for the community to share photos
+              Create a new event or request for the community
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -254,6 +259,16 @@ export default function EventsPage() {
                   />
                 </div>
               </div>
+
+              <div className="flex items-center space-x-2 pt-2">
+                <Switch
+                    id="is_request"
+                    checked={formData.is_request}
+                    onCheckedChange={(checked) => setFormData({ ...formData, is_request: checked })}
+                />
+                <Label htmlFor="is_request">This is a Request / Challenge</Label>
+              </div>
+
               <div className="flex justify-end space-x-2">
                 <Button
                   type="button"
@@ -265,12 +280,13 @@ export default function EventsPage() {
                       description: "",
                       start_date: "",
                       end_date: "",
+                      is_request: false
                     })
                   }}
                 >
                   Cancel
                 </Button>
-                <Button type="submit">Create Event</Button>
+                <Button type="submit">Create</Button>
               </div>
             </form>
           </CardContent>
@@ -280,10 +296,20 @@ export default function EventsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {events.map((event) => (
           <Link key={event.id} href={`/events/${event.slug}`}>
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+            <Card className={cn(
+                "hover:shadow-lg transition-shadow cursor-pointer h-full border-l-4",
+                event.type === 'request' ? "border-l-blue-500" : "border-l-transparent"
+            )}>
               <CardHeader>
                 <div className="flex justify-between items-start">
-                  <CardTitle className="text-xl">{event.name}</CardTitle>
+                  <div className="flex flex-col">
+                    {event.type === 'request' && (
+                        <span className="text-xs font-bold text-blue-600 mb-1 flex items-center">
+                            <Flag className="w-3 h-3 mr-1" /> REQUEST
+                        </span>
+                    )}
+                    <CardTitle className="text-xl font-heading">{event.name}</CardTitle>
+                  </div>
                   {event.is_featured && (
                     <span className="text-xs bg-primary text-white px-2 py-1 rounded">
                       Featured
@@ -353,7 +379,7 @@ export default function EventsPage() {
           <p className="text-gray-500">No events created yet</p>
           {currentUser?.is_admin && (
             <p className="text-sm text-gray-400 mt-2">
-              Click &quot;Create Event&quot; to add your first event
+              Click &quot;Create Event/Request&quot; to add your first event
             </p>
           )}
         </div>
