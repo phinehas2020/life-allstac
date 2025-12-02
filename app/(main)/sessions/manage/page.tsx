@@ -191,7 +191,7 @@ export default function SessionManagePage() {
             {sessions.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                  You haven't created any private sessions yet.
+                  You haven&apos;t created any private sessions yet.
                 </TableCell>
               </TableRow>
             ) : (
