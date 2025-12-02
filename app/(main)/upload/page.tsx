@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, Suspense } from "react"
+import { useState, useEffect, useCallback, Suspense, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { UploadZone } from "@/components/upload-zone"
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/lib/hooks/use-toast"
-import { Loader2, Copy } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import type { Event, Session } from "@/lib/types/database"
 import imageCompression from 'browser-image-compression';
 import { encode } from 'blurhash';
@@ -85,6 +85,7 @@ function UploadPageContent() {
   const [events, setEvents] = useState<Event[]>([])
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadStatus, setUploadStatus] = useState("")
 
   // Private Session State
   const [isPrivateSession, setIsPrivateSession] = useState(false)
@@ -98,6 +99,9 @@ function UploadPageContent() {
   const searchParams = useSearchParams()
   const { toast } = useToast()
   const supabase = createClient()
+
+  // Use a ref to track accumulated progress points to avoid stale closures in loop
+  const progressPointsRef = useRef(0)
 
   const fetchEvents = useCallback(async () => {
     const { data, error } = await (supabase as any)
@@ -141,6 +145,9 @@ function UploadPageContent() {
 
   const handleFilesSelected = (selectedFiles: File[]) => {
     setFiles(selectedFiles)
+    // Reset progress when files change
+    setUploadProgress(0)
+    setUploadStatus("")
   }
 
   const handleEventToggle = (eventId: string) => {
@@ -181,7 +188,19 @@ function UploadPageContent() {
     }
 
     setUploading(true)
-    setUploadProgress(0)
+    setUploadProgress(1) // Start with a small progress
+    setUploadStatus("Preparing files...")
+    progressPointsRef.current = 0
+
+    // Total points = 100 * files.length
+    // Each file: 20 points for compression/prep, 80 points for upload/save
+    const totalPoints = files.length * 100
+
+    const updateProgress = (pointsToAdd: number) => {
+      progressPointsRef.current += pointsToAdd
+      const percentage = Math.min((progressPointsRef.current / totalPoints) * 100, 100)
+      setUploadProgress(percentage)
+    }
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -199,6 +218,7 @@ function UploadPageContent() {
 
       // Create session if needed
       if (isPrivateSession && createNewSession) {
+        setUploadStatus("Creating session...")
         // We cast as 'any' because TypeScript might not pick up the new table immediately
         // or inference is tricky with generic clients sometimes
         const { data: sessionData, error: sessionError } = await (supabase as any)
@@ -214,6 +234,8 @@ function UploadPageContent() {
         if (sessionError) throw sessionError
         targetSessionId = (sessionData as any).id
       }
+
+      setUploadStatus("Processing & Uploading...")
 
       const uploadPromises = files.map(async (file) => {
         let fileToUpload = file;
@@ -240,21 +262,15 @@ function UploadPageContent() {
           }
         }
 
+        // Step 1 Complete: Compression/Prep
+        updateProgress(20)
+
         // Generate unique filename
         const fileExt = file.name.split(".").pop()
         const fileName = `${user.id}-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
         const filePath = isPrivateSession ? `sessions/${fileName}` : `posts/${fileName}`
 
         // Upload to Supabase Storage
-        // Note: Make sure "sessions" bucket exists or use "posts" but handle permissions
-        // We'll use "posts" bucket for simplicity but rely on RLS/path conventions if needed.
-        // Actually, let's just use "posts" bucket. The RLS on the table protects the record.
-        // The object itself might be public if bucket is public.
-        // For strict privacy, we'd need a private bucket + signed URLs.
-        // Assuming "posts" bucket is public for now as per existing code.
-        // "Private" here effectively means "Unlisted" + "Password protected access via app".
-        // Real security would require signed URLs.
-
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from("posts")
           .upload(filePath, fileToUpload)
@@ -343,11 +359,8 @@ function UploadPageContent() {
           }
         }
 
-        // Update progress
-        setUploadProgress((prev) => {
-          const newProgress = prev + (100 / files.length)
-          return Math.min(newProgress, 100)
-        })
+        // Step 2 Complete: Upload & Save
+        updateProgress(80)
 
         return postData
       })
@@ -379,6 +392,9 @@ function UploadPageContent() {
       setCaption("")
       setTags("")
       setSelectedEvents([])
+      setUploadStatus("")
+      setUploadProgress(0)
+
       if (!isPrivateSession) {
         router.push("/")
       } else {
@@ -392,6 +408,7 @@ function UploadPageContent() {
         description: error.message || "Failed to upload files",
         variant: "destructive",
       })
+      setUploadStatus("Error")
     } finally {
       setUploading(false)
     }
@@ -540,7 +557,7 @@ function UploadPageContent() {
                 {uploading && (
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm text-gray-500">
-                      <span>Uploading...</span>
+                      <span>{uploadStatus || "Uploading..."}</span>
                       <span>{Math.round(uploadProgress)}%</span>
                     </div>
                     <Progress value={uploadProgress} className="h-2" />
