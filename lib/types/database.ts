@@ -62,6 +62,7 @@ export interface Database {
           created_by: string
           created_at: string
           updated_at: string
+          type: 'event' | 'request'
         }
         Insert: {
           id?: string
@@ -75,6 +76,7 @@ export interface Database {
           created_by: string
           created_at?: string
           updated_at?: string
+          type?: 'event' | 'request'
         }
         Update: {
           id?: string
@@ -86,6 +88,7 @@ export interface Database {
           end_date?: string | null
           is_featured?: boolean
           updated_at?: string
+          type?: 'event' | 'request'
         }
       }
       posts: {
@@ -105,6 +108,7 @@ export interface Database {
           weighted_rating_sum: number
           created_at: string
           updated_at: string
+          session_id: string | null
         }
         Insert: {
           id?: string
@@ -122,6 +126,7 @@ export interface Database {
           weighted_rating_sum?: number
           created_at?: string
           updated_at?: string
+          session_id?: string | null
         }
         Update: {
           id?: string
@@ -130,6 +135,32 @@ export interface Database {
           quality_score?: number | null
           rating_count?: number
           weighted_rating_sum?: number
+          updated_at?: string
+          session_id?: string | null
+        }
+      }
+      sessions: {
+        Row: {
+          id: string
+          photographer_id: string
+          title: string
+          password_hash: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          photographer_id: string
+          title: string
+          password_hash: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          photographer_id?: string
+          title?: string
+          password_hash?: string
           updated_at?: string
         }
       }
@@ -319,7 +350,26 @@ export interface Database {
       }
     }
     Views: {}
-    Functions: {}
+    Functions: {
+      get_session_photos: {
+        Args: {
+          p_session_id: string
+          p_password: string
+        }
+        Returns: Database['public']['Tables']['posts']['Row'][]
+      }
+      get_session_details: {
+        Args: {
+          p_session_id: string
+          p_password: string
+        }
+        Returns: {
+          id: string
+          title: string
+          created_at: string
+        }[]
+      }
+    }
     Enums: {}
   }
 }
@@ -327,6 +377,7 @@ export interface Database {
 export type User = Database['public']['Tables']['users']['Row']
 export type Event = Database['public']['Tables']['events']['Row']
 export type Post = Database['public']['Tables']['posts']['Row']
+export type Session = Database['public']['Tables']['sessions']['Row']
 export type PostEvent = Database['public']['Tables']['post_events']['Row']
 export type Like = Database['public']['Tables']['likes']['Row']
 export type Comment = Database['public']['Tables']['comments']['Row']
