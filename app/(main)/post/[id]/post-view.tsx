@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Heart, MessageCircle, Download, Share2, Send, ArrowLeft, Star } from "lucide-react"
+import { Heart, MessageCircle, Download, Share2, Send, ArrowLeft, Star, Trash2 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { useToast } from "@/lib/hooks/use-toast"
 import { PhotoRating } from "@/components/photo-rating"
@@ -279,6 +279,42 @@ export default function PostView({ id }: { id?: string }) {
     }
   }
 
+  const handleDelete = async () => {
+    if (!post || !currentUser) return
+
+    const confirmed = window.confirm("Are you sure you want to delete this post? This action cannot be undone.")
+    if (!confirmed) return
+
+    try {
+      // Delete from storage first (optional, but good practice if not relying on cascade or triggers)
+      // Actually, triggers or backend logic usually handle storage cleanup.
+      // But let's just delete the DB record.
+
+      const { error } = await supabase
+        .from("posts")
+        .delete()
+        .eq("id", postId)
+
+      if (error) {
+        throw error
+      }
+
+      toast({
+        title: "Success",
+        description: "Post deleted successfully",
+      })
+
+      router.push("/")
+    } catch (error: any) {
+      console.error("Error deleting post:", error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete post",
+        variant: "destructive",
+      })
+    }
+  }
+
   if (loading || !post) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
@@ -291,16 +327,31 @@ export default function PostView({ id }: { id?: string }) {
     )
   }
 
+  const canDelete = currentUser && (currentUser.id === post.user_id || currentUserData?.is_admin)
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <Button
-        variant="ghost"
-        onClick={() => router.back()}
-        className="mb-4"
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Back
-      </Button>
+      <div className="flex justify-between items-center mb-4">
+        <Button
+          variant="ghost"
+          onClick={() => router.back()}
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+
+        {canDelete && (
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleDelete}
+            className="flex items-center gap-2"
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete Post
+          </Button>
+        )}
+      </div>
 
       <div className="grid md:grid-cols-2 gap-8">
         {/* Media Section */}
