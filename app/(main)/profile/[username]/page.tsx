@@ -91,6 +91,7 @@ export default function ProfilePage() {
           )
         `)
         .eq("user_id", userData.id)
+        .is("session_id", null)
         .order("quality_score", { ascending: false })
         .order("created_at", { ascending: false })
 
