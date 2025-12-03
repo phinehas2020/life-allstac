@@ -66,6 +66,7 @@ export default function EventDetailPage() {
           post_events!inner(event_id)
         `)
         .eq("post_events.event_id", eventData.id)
+        .is("session_id", null)
         .order("quality_score", { ascending: false })
         .order("created_at", { ascending: false })
 
