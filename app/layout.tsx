@@ -2,6 +2,8 @@ import type { Metadata } from "next"
 import { Space_Grotesk, DM_Sans } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
+import { UploadProvider } from "@/lib/context/upload-context"
+import { GlobalUploadIndicator } from "@/components/global-upload-indicator"
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -28,8 +30,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${dmSans.variable}`}>
       <body className={dmSans.className}>
-        {children}
-        <Toaster />
+        <UploadProvider>
+          {children}
+          <GlobalUploadIndicator />
+          <Toaster />
+        </UploadProvider>
       </body>
     </html>
   )
