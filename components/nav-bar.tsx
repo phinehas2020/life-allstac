@@ -111,6 +111,11 @@ export function NavBar() {
     { href: "/admin/photographers", label: "Manage", icon: Shield },
   ] : []
 
+  // If user is logged in, they can see My Sessions
+  const sessionItem = user ? [
+    { href: "/sessions/manage", label: "My Sessions", icon: Shield }
+  ] : []
+
   return (
     <nav
       className={`sticky top-0 z-50 w-full transition-all duration-300 ${
@@ -148,6 +153,21 @@ export function NavBar() {
                 </Link>
               )
             })}
+            {/* Show My Sessions for logged in users */}
+            {user && (
+                 <Link
+                  href="/sessions/manage"
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                    pathname === "/sessions/manage"
+                      ? "bg-white text-primary shadow-sm"
+                      : "text-gray-600 hover:text-primary hover:bg-white/50"
+                  }`}
+                >
+                  <Shield className={`w-4 h-4 ${pathname === "/sessions/manage" ? "stroke-[2.5px]" : ""}`} />
+                  <span>My Sessions</span>
+                </Link>
+            )}
+
             {adminItems.map((item) => {
               const Icon = item.icon
               const isActive = pathname === item.href
@@ -262,6 +282,21 @@ export function NavBar() {
                 </Link>
               )
             })}
+            {user && (
+                 <Link
+                  href="/sessions/manage"
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium transition-colors ${
+                    pathname === "/sessions/manage"
+                      ? "bg-secondary text-primary"
+                      : "text-gray-600 hover:bg-gray-50"
+                  }`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Shield className="w-5 h-5" />
+                  <span>My Sessions</span>
+                </Link>
+            )}
+
             {adminItems.map((item) => {
               const Icon = item.icon
               return (
