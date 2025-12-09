@@ -439,7 +439,10 @@ function UploadPageContent() {
               </span>
           </div>
 
-          <UploadZone onFilesSelected={handleFilesSelected} />
+          <UploadZone
+            onFilesSelected={handleFilesSelected}
+            maxFiles={isPrivateSession ? 100 : 10}
+          />
 
           {files.length > 0 && (
             <>
