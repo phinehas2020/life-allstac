@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { cn } from '@/lib/utils/cn'
 import { Post } from '@/lib/types/database'
-import { X, ChevronLeft, ChevronRight, Download, Loader2, ArrowLeft } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight, Download, Loader2, ArrowLeft, Share2 } from 'lucide-react'
 import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
 import { useWindowSize } from '@/lib/hooks/use-window-size'
@@ -19,11 +19,27 @@ export default function SessionPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [downloadingAll, setDownloadingAll] = useState(false)
+  const [sharing, setSharing] = useState(false)
+  const [isShareSupported, setIsShareSupported] = useState(false)
   const [sessionData, setSessionData] = useState<{
     title: string
     created_at: string
   } | null>(null)
   const [photos, setPhotos] = useState<Post[]>([])
+
+  // Check for Web Share API support
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && 'share' in navigator && 'canShare' in navigator) {
+      try {
+        const file = new File([], 'test.png', { type: 'image/png' })
+        if (navigator.canShare({ files: [file] })) {
+          setIsShareSupported(true)
+        }
+      } catch (e) {
+        console.error('Error checking share support', e)
+      }
+    }
+  }, [])
 
   // Lightbox State
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null)
@@ -99,28 +115,37 @@ export default function SessionPage() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [selectedPhotoIndex, closeLightbox, nextPhoto, prevPhoto])
 
+  // Fetch Photos Helper
+  const fetchAllPhotos = async () => {
+    const promises = photos.map(async (photo, index) => {
+      try {
+        const response = await fetch(photo.media_url)
+        const blob = await response.blob()
+        const ext = photo.type === 'video' ? 'mp4' : 'jpg'
+        const filename = `photo-${index + 1}.${ext}`
+        return new File([blob], filename, { type: blob.type })
+      } catch (e) {
+        console.error(`Failed to fetch photo ${index}`, e)
+        return null
+      }
+    })
+
+    const results = await Promise.all(promises)
+    return results.filter((f): f is File => f !== null)
+  }
+
   // Download All Handler
   const handleDownloadAll = async () => {
     if (photos.length === 0) return
     setDownloadingAll(true)
     try {
+      const files = await fetchAllPhotos()
       const zip = new JSZip()
       const folder = zip.folder(sessionData?.title || 'session-photos')
 
-      // Use Promise.all to fetch all images
-      const promises = photos.map(async (photo, index) => {
-        try {
-          const response = await fetch(photo.media_url)
-          const blob = await response.blob()
-          const ext = photo.type === 'video' ? 'mp4' : 'jpg' // Simple extension logic
-          const filename = `photo-${index + 1}.${ext}`
-          folder?.file(filename, blob)
-        } catch (e) {
-          console.error(`Failed to download photo ${index}`, e)
-        }
+      files.forEach(file => {
+        folder?.file(file.name, file)
       })
-
-      await Promise.all(promises)
 
       const content = await zip.generateAsync({ type: 'blob' })
       saveAs(content, `${sessionData?.title || 'session'}-photos.zip`)
@@ -129,6 +154,31 @@ export default function SessionPage() {
       alert('Failed to download photos. Please try again.')
     } finally {
       setDownloadingAll(false)
+    }
+  }
+
+  // Share/Save to Photos Handler
+  const handleSaveToPhotos = async () => {
+    if (photos.length === 0) return
+    setSharing(true)
+    try {
+      const files = await fetchAllPhotos()
+      if (files.length === 0) return
+
+      if ('canShare' in navigator && navigator.canShare({ files })) {
+        await navigator.share({
+          files,
+          title: sessionData?.title || 'Session Photos',
+          text: 'Here are the photos from the session.'
+        })
+      } else {
+        throw new Error('Your browser does not support sharing these files.')
+      }
+    } catch (e) {
+      console.error('Error sharing photos', e)
+      alert('Failed to save to photos. Try downloading as ZIP instead.')
+    } finally {
+      setSharing(false)
     }
   }
 
@@ -195,12 +245,33 @@ export default function SessionPage() {
                  })}
               </p>
 
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-4">
+                 {isShareSupported && (
+                   <Button
+                     onClick={handleSaveToPhotos}
+                     disabled={sharing || downloadingAll || photos.length === 0}
+                     className="shadow-lg"
+                     size="lg"
+                   >
+                     {sharing ? (
+                       <>
+                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                         Preparing...
+                       </>
+                     ) : (
+                       <>
+                         <Share2 className="mr-2 h-4 w-4" />
+                         Save to Photos
+                       </>
+                     )}
+                   </Button>
+                 )}
                  <Button
                    onClick={handleDownloadAll}
-                   disabled={downloadingAll || photos.length === 0}
+                   disabled={downloadingAll || sharing || photos.length === 0}
                    className="shadow-lg"
                    size="lg"
+                   variant={isShareSupported ? "secondary" : "default"}
                  >
                    {downloadingAll ? (
                      <>
@@ -210,7 +281,7 @@ export default function SessionPage() {
                    ) : (
                      <>
                        <Download className="mr-2 h-4 w-4" />
-                       Download All Photos
+                       {isShareSupported ? 'Download ZIP' : 'Download All Photos'}
                      </>
                    )}
                  </Button>

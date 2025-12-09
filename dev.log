@@ -1,0 +1,21 @@
+
+> life.allstac@1.0.0 dev
+> next dev
+
+  ▲ Next.js 14.2.5
+  - Local:        http://localhost:3000
+
+ ✓ Starting...
+ ✓ Ready in 2.6s
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 970ms (157 modules)
+ ○ Compiling /sessions/[id] ...
+ ✓ Compiled /sessions/[id] in 8.2s (1731 modules)
+ ✓ Compiled in 609ms (824 modules)
+ GET /sessions/123 200 in 9371ms
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (118kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+ GET /sessions/123 200 in 95ms
+ GET /sessions/123 200 in 53ms
+ ⨯ upstream image response failed for https://images.unsplash.com/photo-123 404
+ ⨯ upstream image response failed for https://images.unsplash.com/photo-123 404
+[?25h
