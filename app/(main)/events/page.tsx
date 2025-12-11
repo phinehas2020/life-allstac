@@ -19,13 +19,23 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
-  const [formData, setFormData] = useState({
+
+  const initialFormState = {
     name: "",
     description: "",
     start_date: "",
     end_date: "",
     is_request: false
-  })
+  }
+
+  const [formData, setFormData] = useState(initialFormState)
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null)
+
+  const resetForm = () => {
+    setShowCreateForm(false)
+    setEditingEvent(null)
+    setFormData(initialFormState)
+  }
   const { toast } = useToast()
   const supabase = createClient()
 
@@ -84,6 +94,71 @@ export default function EventsPage() {
       .trim()
   }
 
+  const handleUpdateEvent = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!currentUser?.is_admin || !editingEvent) return
+
+    try {
+      const updates: any = {
+        name: formData.name,
+        description: formData.description,
+        start_date: formData.start_date || null,
+        end_date: formData.end_date || null,
+        type: formData.is_request ? 'request' : 'event'
+      }
+
+      if (formData.name !== editingEvent.name) {
+        updates.slug = createSlug(formData.name)
+      }
+
+      const { data, error } = await supabase
+        .from("events")
+        .update(updates)
+        .eq("id", editingEvent.id)
+        .select()
+        .single()
+
+      if (error) {
+        if (error.code === "23505") {
+          toast({
+            title: "Error",
+            description: "An event with this name already exists",
+            variant: "destructive",
+          })
+        } else {
+          throw error
+        }
+        return
+      }
+
+      if (data) {
+        setEvents((prev) => prev.map((e) => {
+          if (e.id === editingEvent.id) {
+            return {
+              ...e,
+              ...data,
+              post_events: (e as any).post_events,
+              event_follows: (e as any).event_follows
+            }
+          }
+          return e
+        }))
+        resetForm()
+        toast({
+          title: "Success",
+          description: "Event updated successfully",
+        })
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update event",
+        variant: "destructive",
+      })
+    }
+  }
+
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -128,14 +203,7 @@ export default function EventsPage() {
 
       if (data) {
         setEvents((prev) => [data, ...prev])
-        setShowCreateForm(false)
-        setFormData({
-          name: "",
-          description: "",
-          start_date: "",
-          end_date: "",
-          is_request: false
-        })
+        resetForm()
         toast({
           title: "Success",
           description: "Event created successfully",
@@ -203,7 +271,10 @@ export default function EventsPage() {
           </p>
         </div>
         {currentUser?.is_admin && (
-          <Button onClick={() => setShowCreateForm(!showCreateForm)}>
+          <Button onClick={() => {
+            resetForm()
+            setShowCreateForm(true)
+          }}>
             <Plus className="w-4 h-4 mr-2" />
             Create Event/Request
           </Button>
@@ -213,13 +284,15 @@ export default function EventsPage() {
       {showCreateForm && currentUser?.is_admin && (
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Create New Event</CardTitle>
+            <CardTitle>{editingEvent ? "Edit Event" : "Create New Event"}</CardTitle>
             <CardDescription>
-              Create a new event or request for the community
+              {editingEvent
+                ? "Update the details of this event"
+                : "Create a new event or request for the community"}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleCreateEvent} className="space-y-4">
+            <form onSubmit={editingEvent ? handleUpdateEvent : handleCreateEvent} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Event Name</Label>
                 <Input
@@ -273,20 +346,11 @@ export default function EventsPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => {
-                    setShowCreateForm(false)
-                    setFormData({
-                      name: "",
-                      description: "",
-                      start_date: "",
-                      end_date: "",
-                      is_request: false
-                    })
-                  }}
+                  onClick={resetForm}
                 >
                   Cancel
                 </Button>
-                <Button type="submit">Create</Button>
+                <Button type="submit">{editingEvent ? "Update" : "Create"}</Button>
               </div>
             </form>
           </CardContent>
@@ -352,7 +416,16 @@ export default function EventsPage() {
                     size="icon"
                     onClick={(e) => {
                       e.preventDefault()
-                      // TODO: Implement edit functionality
+                      setEditingEvent(event)
+                      setFormData({
+                        name: event.name,
+                        description: event.description || "",
+                        start_date: event.start_date ? format(new Date(event.start_date), "yyyy-MM-dd'T'HH:mm") : "",
+                        end_date: event.end_date ? format(new Date(event.end_date), "yyyy-MM-dd'T'HH:mm") : "",
+                        is_request: event.type === 'request'
+                      })
+                      setShowCreateForm(true)
+                      window.scrollTo({ top: 0, behavior: 'smooth' })
                     }}
                   >
                     <Edit className="w-4 h-4" />
