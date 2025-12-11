@@ -266,13 +266,6 @@ export function UploadProvider({ children }: { children: ReactNode }) {
         // 3. Database Insert
         // Process tags
         const tagsArray = task.tags ? task.tags.map(t => t.trim()).filter(Boolean) : []
-        // Note: We might want to fetch event names if only IDs are stored,
-        // but for now we rely on the component passing resolved event names or just IDs?
-        // The previous code passed "allTags" including event names.
-        // Let's assume metadata.tags includes everything or we simplify.
-        // Actually, previous code: tags + eventNames.
-        // We will assume `metadata.tags` passed to startUpload is already fully prepared or we fix logic later.
-        // In the `startUpload` call from page, we will combine them.
 
         // @ts-ignore
         const { data: postData, error: postError } = await supabase.from("posts").insert({
