@@ -23,7 +23,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/lib/hooks/use-toast"
-import { Loader2, Trash2, Key, ExternalLink, Copy, Eye } from "lucide-react"
+import { Loader2, Trash2, Key, ExternalLink, Copy, Eye, Grid } from "lucide-react"
 import Link from "next/link"
 
 interface Session {
@@ -234,14 +234,23 @@ export default function SessionManagePage() {
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDelete(session.id)}
-                      disabled={actionLoading}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center justify-end space-x-2">
+                      <Link href={`/sessions/manage/${session.id}`}>
+                        <Button variant="outline" size="sm" title="Manage Photos">
+                          <Grid className="h-4 w-4 mr-2" />
+                          Manage
+                        </Button>
+                      </Link>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDelete(session.id)}
+                        disabled={actionLoading}
+                        title="Delete Session"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

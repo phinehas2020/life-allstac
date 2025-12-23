@@ -114,6 +114,7 @@ export default function EventsPage() {
 
       const { data, error } = await supabase
         .from("events")
+        // @ts-ignore
         .update(updates)
         .eq("id", editingEvent.id)
         .select()
@@ -137,7 +138,7 @@ export default function EventsPage() {
           if (e.id === editingEvent.id) {
             return {
               ...e,
-              ...data,
+              ...(data as any),
               post_events: (e as any).post_events,
               event_follows: (e as any).event_follows
             }

@@ -109,6 +109,7 @@ export interface Database {
           created_at: string
           updated_at: string
           session_id: string | null
+          position: number
         }
         Insert: {
           id?: string
@@ -127,6 +128,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
           session_id?: string | null
+          position?: number
         }
         Update: {
           id?: string
@@ -137,6 +139,7 @@ export interface Database {
           weighted_rating_sum?: number
           updated_at?: string
           session_id?: string | null
+          position?: number
         }
       }
       sessions: {
@@ -368,6 +371,12 @@ export interface Database {
           title: string
           created_at: string
         }[]
+      }
+      update_posts_order: {
+        Args: {
+          updates: { id: string; position: number }[]
+        }
+        Returns: void
       }
     }
     Enums: {}
