@@ -148,10 +148,15 @@ export default function SessionManageDetailPage() {
       .order("position", { ascending: true })
       .order("created_at", { ascending: false })
 
-    if (data && !error) {
+    if (error) {
+      console.error("Error fetching photos:", error)
+      toast({ title: "Error", description: "Failed to load photos: " + error.message, variant: "destructive" })
+    }
+
+    if (data) {
       setPhotos(data)
     }
-  }, [id, supabase])
+  }, [id, supabase, toast])
 
   useEffect(() => {
     if (isUploading) {
