@@ -202,7 +202,7 @@ export default function SessionManagePage() {
                   <TableCell>
                     <div className="flex items-center space-x-2">
                        <span className="text-muted-foreground text-sm font-mono bg-muted px-2 py-0.5 rounded">
-                         {session.password_hash}
+                         ••••••••
                        </span>
                        <Button
                          variant="ghost"
