@@ -5,7 +5,7 @@ CREATE TABLE public.dm_threads (
     user_b UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     CHECK (user_a <> user_b),
-    UNIQUE(user_a, user_b)
+    CHECK (user_a < user_b)
 );
 
 -- Create direct message table
@@ -20,6 +20,8 @@ CREATE TABLE public.dm_messages (
 -- Indexes for performance
 CREATE INDEX idx_dm_threads_user_a ON public.dm_threads(user_a);
 CREATE INDEX idx_dm_threads_user_b ON public.dm_threads(user_b);
+CREATE UNIQUE INDEX idx_dm_threads_unique_pair
+    ON public.dm_threads (LEAST(user_a, user_b), GREATEST(user_a, user_b));
 CREATE INDEX idx_dm_messages_thread_id ON public.dm_messages(thread_id);
 CREATE INDEX idx_dm_messages_sender_id ON public.dm_messages(sender_id);
 CREATE INDEX idx_dm_messages_created_at ON public.dm_messages(created_at DESC);
