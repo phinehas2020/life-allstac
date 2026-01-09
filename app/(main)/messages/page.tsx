@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useToast } from "@/lib/hooks/use-toast"
-import type { Database, DirectMessage, DirectMessageThread, User } from "@/lib/types/database"
+import type { DirectMessage, DirectMessageThread, User } from "@/lib/types/database"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 import { MessageCircle } from "lucide-react"
 
@@ -117,9 +117,9 @@ export default function MessagesPage() {
       return
     }
 
-    const { data: created, error } = await supabase
+    const { data: created, error } = await (supabase as any)
       .from("dm_threads")
-      .insert({ user_a: userA, user_b: userB } as Database["public"]["Tables"]["dm_threads"]["Insert"])
+      .insert({ user_a: userA, user_b: userB })
       .select("id")
       .single()
 
