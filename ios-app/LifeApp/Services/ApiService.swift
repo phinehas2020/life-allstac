@@ -574,20 +574,88 @@ class ApiService {
         guard let url = URL(string: "\(baseURL)/users/\(userId)/follow") else {
             throw ApiError.invalidURL
         }
-        
+
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
+
         if let token = AuthTokenManager.shared.getAccessToken() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
-        
+
         let (_, response) = try await URLSession.shared.data(for: request)
-        
+
         guard let httpResponse = response as? HTTPURLResponse,
               httpResponse.statusCode == 200 else {
             throw ApiError.invalidResponse
+        }
+    }
+
+    // MARK: - Upload
+
+    func uploadPost(imageData: Data, caption: String?, eventId: String?) async throws {
+        guard let url = URL(string: "\(baseURL)/posts") else {
+            throw ApiError.invalidURL
+        }
+
+        print("📤 [API] Uploading post...")
+
+        let boundary = UUID().uuidString
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+
+        if let token = AuthTokenManager.shared.getAccessToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        var body = Data()
+
+        // Add image data
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"image.jpg\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
+        body.append(imageData)
+        body.append("\r\n".data(using: .utf8)!)
+
+        // Add caption if present
+        if let caption = caption {
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"caption\"\r\n\r\n".data(using: .utf8)!)
+            body.append("\(caption)\r\n".data(using: .utf8)!)
+        }
+
+        // Add event ID if present
+        if let eventId = eventId {
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"eventId\"\r\n\r\n".data(using: .utf8)!)
+            body.append("\(eventId)\r\n".data(using: .utf8)!)
+        }
+
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+
+        request.httpBody = body
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw ApiError.invalidResponse
+            }
+
+            print("📤 [API] Upload response status: \(httpResponse.statusCode)")
+
+            if httpResponse.statusCode != 200 && httpResponse.statusCode != 201 {
+                let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
+                print("❌ [API] Upload error: \(errorBody)")
+                throw ApiError.httpError(httpResponse.statusCode)
+            }
+
+            print("✅ [API] Post uploaded successfully")
+        } catch {
+            print("❌ [API] Upload failed: \(error.localizedDescription)")
+            throw error
         }
     }
 }
