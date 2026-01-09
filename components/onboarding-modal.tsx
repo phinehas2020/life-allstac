@@ -95,9 +95,9 @@ export function OnboardingModal() {
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => (nextOpen ? setOpen(true) : handleClose())}>
-      <DialogContent className="max-w-3xl gap-0 p-0">
-        <div className="border-b border-border/70 px-6 py-5">
-          <DialogHeader className="space-y-2">
+      <DialogContent className="max-h-[90vh] w-[95vw] max-w-3xl flex flex-col gap-0 p-0 overflow-hidden rounded-xl">
+        <div className="border-b border-border/70 px-6 py-5 shrink-0">
+          <DialogHeader className="space-y-2 pr-6">
             <DialogTitle className="text-2xl font-semibold text-foreground">
               Welcome to Life.Allstac
             </DialogTitle>
@@ -107,33 +107,35 @@ export function OnboardingModal() {
           </DialogHeader>
         </div>
 
-        <div className="grid gap-4 px-6 py-5 md:grid-cols-2">
-          {onboardingSteps.map((step, index) => {
-            const Icon = step.icon
-            return (
-              <div
-                key={step.title}
-                className="flex h-full flex-col gap-3 rounded-xl border border-border/60 bg-secondary/30 p-4"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm">
-                    <Icon className="h-5 w-5 text-primary" />
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          <div className="grid gap-4 md:grid-cols-2">
+            {onboardingSteps.map((step, index) => {
+              const Icon = step.icon
+              return (
+                <div
+                  key={step.title}
+                  className="flex h-full flex-col gap-3 rounded-xl border border-border/60 bg-secondary/30 p-4"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm">
+                      <Icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Step {index + 1}</p>
+                      <h3 className="text-base font-semibold text-foreground">{step.title}</h3>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Step {index + 1}</p>
-                    <h3 className="text-base font-semibold text-foreground">{step.title}</h3>
-                  </div>
+                  <p className="text-sm text-muted-foreground">{step.description}</p>
+                  <Button asChild variant="ghost" className="w-fit px-0 text-primary hover:bg-transparent">
+                    <Link href={step.href}>{step.cta}</Link>
+                  </Button>
                 </div>
-                <p className="text-sm text-muted-foreground">{step.description}</p>
-                <Button asChild variant="ghost" className="w-fit px-0 text-primary hover:bg-transparent">
-                  <Link href={step.href}>{step.cta}</Link>
-                </Button>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-border/70 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-t border-border/70 px-6 py-5 shrink-0 sm:flex-row sm:items-center sm:justify-between bg-background">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <User className="h-4 w-4" />
             <span>Need to update your profile? Visit Settings anytime.</span>
