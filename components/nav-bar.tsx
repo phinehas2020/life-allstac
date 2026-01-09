@@ -73,18 +73,28 @@ export function NavBar() {
   useEffect(() => {
     if (!user) return
 
+    const refreshUnreadCount = async () => {
+      const { count } = await supabase
+        .from("notifications")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("is_read", false)
+
+      setUnreadCount(count || 0)
+    }
+
     const channel = supabase
       .channel('nav-notifications')
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'notifications',
           filter: `user_id=eq.${user.id}`
         },
         () => {
-            setUnreadCount((prev) => prev + 1)
+            refreshUnreadCount()
         }
       )
       .subscribe()
