@@ -33,17 +33,27 @@ export function NotificationList() {
         const typedData = data as NotificationWithActor[]
         setNotifications(typedData)
 
-        // Mark unread notifications as read
+        // Mark unread notifications as read now that the user has viewed them.
         const unreadIds = typedData
           .filter((n) => !n.is_read)
           .map((n) => n.id)
 
         if (unreadIds.length > 0) {
-          await supabase
+          const { error: updateError } = await supabase
             .from("notifications")
             // @ts-ignore
             .update({ is_read: true })
             .in("id", unreadIds)
+
+          if (!updateError) {
+            setNotifications((prev) =>
+              prev.map((notification) =>
+                unreadIds.includes(notification.id)
+                  ? { ...notification, is_read: true }
+                  : notification
+              )
+            )
+          }
         }
       }
       setLoading(false)
