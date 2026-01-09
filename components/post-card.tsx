@@ -4,15 +4,17 @@ import { useState, useEffect, useCallback, useMemo } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Blurhash } from "react-blurhash"
+import { motion } from "framer-motion"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Heart, MessageCircle, Download, Share2, Play, Star, Award } from "lucide-react"
+import { MessageCircle, Download, Share2, Play, Star, Award } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { useToast } from "@/lib/hooks/use-toast"
 import { PhotographerBadge } from "@/components/photographer-badge"
 import { PhotoRating } from "@/components/photo-rating"
+import { LikeButton } from "@/components/like-button"
 import type { PostWithUser } from "@/lib/types/database"
 
 interface PostCardProps {
@@ -168,8 +170,12 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
   }
 
   return (
-    /* Removed transition-all from the card container to fix flickering/glitching in masonry layouts */
-    <Card className="group border-0 shadow-sm hover:shadow-lg transition-shadow duration-300 bg-card rounded-2xl overflow-hidden w-full">
+    <motion.div
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className="w-full"
+    >
+    <Card className="group border-0 shadow-sm hover:shadow-xl transition-shadow duration-300 bg-card rounded-2xl overflow-hidden w-full">
       <div className="relative aspect-auto">
         {post.type === "video" ? (
           <div className="relative">
@@ -324,19 +330,12 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
         {/* Actions - Floating/Minimal */}
         <div className="flex items-center justify-between pt-3 border-t border-border/40 gap-2 flex-wrap">
           <div className="flex items-center space-x-3 flex-shrink-0">
-            <button
-              onClick={handleLike}
-              className={`flex items-center space-x-1.5 transition-all duration-200 active:scale-95 ${
-                isLiked ? "text-red-500" : "text-muted-foreground hover:text-red-500"
-              }`}
-            >
-              <Heart
-                className={`w-5 h-5 ${
-                  isLiked ? "fill-current" : ""
-                }`}
-              />
-              <span className="text-sm font-medium">{likeCount}</span>
-            </button>
+            <LikeButton
+              isLiked={isLiked}
+              likeCount={likeCount}
+              onLike={handleLike}
+              disabled={!currentUserId}
+            />
             <Link
               href={`/post/${post.id}`}
               className="flex items-center space-x-1.5 text-muted-foreground hover:text-primary transition-colors active:scale-95"
@@ -398,5 +397,6 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
         </div>
       </div>
     </Card>
+    </motion.div>
   )
 }

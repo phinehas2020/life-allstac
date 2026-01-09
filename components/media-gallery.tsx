@@ -1,9 +1,14 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
+import Link from "next/link"
+import { motion } from "framer-motion"
 import { PostCard } from "@/components/post-card"
-import { Loader2 } from "lucide-react"
+import { PostCardSkeleton } from "@/components/post-card-skeleton"
+import { Button } from "@/components/ui/button"
+import { Loader2, ImageIcon, Upload } from "lucide-react"
 import { useWindowSize } from "@/lib/hooks/use-window-size"
+import { staggerContainer, fadeUp } from "@/lib/animations/variants"
 import type { PostWithUser } from "@/lib/types/database"
 
 interface MediaGalleryProps {
@@ -77,57 +82,105 @@ export function MediaGallery({
     return cols
   }, [posts, columnCount])
 
-  if (!mounted) {
+  if (!mounted || (loading && posts.length === 0)) {
+    // Show skeleton loading grid
     return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="flex gap-6 items-start w-full">
+        {Array.from({ length: columnCount }).map((_, colIndex) => (
+          <div key={colIndex} className="flex-1 min-w-0 flex flex-col gap-6">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <PostCardSkeleton key={i} />
+            ))}
+          </div>
+        ))}
       </div>
     )
   }
 
   if (posts.length === 0 && !loading) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">No posts to display</p>
-      </div>
+      <motion.div
+        className="flex flex-col items-center justify-center py-20 text-center"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <motion.div
+          className="w-24 h-24 mb-6 rounded-full bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center shadow-inner"
+          animate={{ y: [0, -6, 0] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <ImageIcon className="w-10 h-10 text-gray-300" />
+        </motion.div>
+        <h3 className="text-xl font-bold text-gray-800 mb-2">No posts yet</h3>
+        <p className="text-gray-500 max-w-sm mb-6">
+          Be the first to share something amazing with the community!
+        </p>
+        <Link href="/upload">
+          <Button variant="gradient" className="px-8">
+            <Upload className="w-4 h-4 mr-2" />
+            Upload First Post
+          </Button>
+        </Link>
+      </motion.div>
     )
   }
 
   return (
     <>
-      <div className="flex gap-6 items-start w-full">
+      <motion.div
+        className="flex gap-6 items-start w-full"
+        variants={staggerContainer}
+        initial="hidden"
+        animate="visible"
+      >
         {columns.map((colPosts, colIndex) => (
           <div key={colIndex} className="flex-1 min-w-0 flex flex-col gap-6">
-            {colPosts.map((post) => (
-              <div key={post.id} className="w-full">
-                 <PostCard
+            {colPosts.map((post, postIndex) => (
+              <motion.div
+                key={post.id}
+                className="w-full"
+                variants={fadeUp}
+                custom={postIndex}
+              >
+                <PostCard
                   post={post}
                   currentUserId={currentUserId}
                   onLikeUpdate={() => {
                     // Optional: Refetch posts or update state
                   }}
                 />
-              </div>
+              </motion.div>
             ))}
           </div>
         ))}
-      </div>
-      
+      </motion.div>
+
       {loading && (
-        <div className="flex justify-center py-8">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" />
-        </div>
+        <motion.div
+          className="flex justify-center py-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <Loader2 className="w-6 h-6 animate-spin text-accent" />
+        </motion.div>
       )}
-      
+
       {!loading && hasMore && onLoadMore && (
-        <div className="flex justify-center py-8">
-          <button
+        <motion.div
+          className="flex justify-center py-8"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <Button
             onClick={onLoadMore}
-            className="text-primary hover:underline"
+            variant="outline"
+            className="px-8"
           >
             Load more
-          </button>
-        </div>
+          </Button>
+        </motion.div>
       )}
     </>
   )

@@ -4,8 +4,8 @@
 
 @layer base {
   :root {
-    /* Warm, nostalgic palette */
-    --background: 30 33% 98%; /* Cream/Off-white */
+    /* Bold & Playful palette */
+    --background: 0 0% 100%; /* Pure white for cleaner contrast */
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
@@ -24,7 +24,8 @@
     --muted: 30 20% 94%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 35 80% 60%; /* Warm amber/orange accent */
+    /* Punchy, saturated accent */
+    --accent: 35 95% 55%;
     --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;
@@ -34,10 +35,20 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
 
-    --radius: 0.75rem; /* Rounder corners */
+    --radius: 0.75rem;
 
     --font-heading: var(--font-space-grotesk);
     --font-body: var(--font-dm-sans);
+
+    /* Gradient colors for Instagram-style effects */
+    --gradient-start: 330 80% 60%; /* Pink/magenta */
+    --gradient-mid: 25 95% 55%; /* Orange */
+    --gradient-end: 280 70% 55%; /* Purple */
+
+    /* Interaction colors */
+    --like-color: 350 85% 55%; /* Vibrant red for likes */
+    --success-color: 145 70% 45%; /* Fresh green */
+    --info-color: 200 90% 50%; /* Bright blue */
   }
 
   .dark {
@@ -99,6 +110,58 @@
 
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Gradient utilities for bold & playful UI */
+  .gradient-brand {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--gradient-start)),
+      hsl(var(--gradient-mid)),
+      hsl(var(--gradient-end))
+    );
+  }
+
+  .gradient-brand-text {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--gradient-start)),
+      hsl(var(--gradient-mid)),
+      hsl(var(--gradient-end))
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-brand-border {
+    position: relative;
+  }
+  .gradient-brand-border::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 2px;
+    border-radius: inherit;
+    background: linear-gradient(
+      135deg,
+      hsl(var(--gradient-start)),
+      hsl(var(--gradient-mid)),
+      hsl(var(--gradient-end))
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Like color utility */
+  .text-like {
+    color: hsl(var(--like-color));
+  }
+  .bg-like {
+    background-color: hsl(var(--like-color));
   }
 }
 

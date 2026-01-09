@@ -2,10 +2,12 @@
 
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
+import { motion, AnimatePresence } from "framer-motion"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Home, Search, Upload, User, Calendar, LogOut, Menu, X, Trophy, Shield, Bell } from "lucide-react"
+import { Home, Search, Upload, User, Calendar, LogOut, Trophy, Shield, Bell } from "lucide-react"
 import { useEffect, useState } from "react"
+import { staggerContainer, fadeUp } from "@/lib/animations/variants"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 import type { User as UserData } from "@/lib/types/database"
 
@@ -137,10 +139,15 @@ export function NavBar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 md:h-20">
           {/* Logo */}
-          <Link href="/" className="flex items-center group">
-            <span className="text-2xl md:text-3xl font-bold tracking-tighter text-primary group-hover:opacity-80 transition-opacity font-heading">
+          <Link href="/" className="flex items-center">
+            <motion.span
+              className="text-2xl md:text-3xl font-bold tracking-tighter gradient-brand-text font-heading"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            >
               Life.Allstac
-            </span>
+            </motion.span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -213,7 +220,10 @@ export function NavBar() {
                   <Button variant="ghost" size="icon" className="rounded-full w-10 h-10 hover:bg-secondary relative">
                     <Bell className="w-5 h-5" />
                     {unreadCount > 0 && (
-                      <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                      <>
+                        <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full animate-notification-ping" />
+                        <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
+                      </>
                     )}
                   </Button>
                 </Link>
@@ -259,37 +269,72 @@ export function NavBar() {
               size="icon"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="rounded-full"
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             >
-              {mobileMenuOpen ? (
-                <X className="w-6 h-6" />
-              ) : (
-                <Menu className="w-6 h-6" />
-              )}
+              <div className="relative w-5 h-5 flex flex-col justify-center items-center">
+                <motion.span
+                  className="absolute w-5 h-0.5 bg-current rounded-full"
+                  animate={{
+                    rotate: mobileMenuOpen ? 45 : 0,
+                    y: mobileMenuOpen ? 0 : -4,
+                  }}
+                  transition={{ duration: 0.2 }}
+                />
+                <motion.span
+                  className="absolute w-5 h-0.5 bg-current rounded-full"
+                  animate={{
+                    opacity: mobileMenuOpen ? 0 : 1,
+                    scale: mobileMenuOpen ? 0.5 : 1,
+                  }}
+                  transition={{ duration: 0.15 }}
+                />
+                <motion.span
+                  className="absolute w-5 h-0.5 bg-current rounded-full"
+                  animate={{
+                    rotate: mobileMenuOpen ? -45 : 0,
+                    y: mobileMenuOpen ? 0 : 4,
+                  }}
+                  transition={{ duration: 0.2 }}
+                />
+              </div>
             </Button>
           </div>
         </div>
       </div>
 
       {/* Mobile Navigation */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-gray-200 absolute w-full shadow-lg animate-accordion-down">
-          <div className="px-4 pt-2 pb-6 space-y-2">
-            {navItems.map((item) => {
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            className="md:hidden bg-white border-b border-gray-200 absolute w-full shadow-lg overflow-hidden"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+          >
+            <motion.div
+              className="px-4 pt-2 pb-6 space-y-2"
+              variants={staggerContainer}
+              initial="hidden"
+              animate="visible"
+            >
+            {navItems.map((item, index) => {
               const Icon = item.icon
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium transition-colors ${
-                    pathname === item.href
-                      ? "bg-secondary text-primary"
-                      : "text-gray-600 hover:bg-gray-50"
-                  }`}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span>{item.label}</span>
-                </Link>
+                <motion.div key={item.href} variants={fadeUp} custom={index}>
+                  <Link
+                    href={item.href}
+                    className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium transition-colors ${
+                      pathname === item.href
+                        ? "bg-secondary text-primary"
+                        : "text-gray-600 hover:bg-gray-50"
+                    }`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span>{item.label}</span>
+                  </Link>
+                </motion.div>
               )
             })}
             {user && (
@@ -371,9 +416,10 @@ export function NavBar() {
                 </Link>
               </div>
             )}
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   )
 }

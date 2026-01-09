@@ -1,5 +1,6 @@
 import { NavBar } from "@/components/nav-bar"
 import { OnboardingModal } from "@/components/onboarding-modal"
+import { PageTransition } from "@/components/page-transition"
 
 export default function MainLayout({
   children,
@@ -11,7 +12,9 @@ export default function MainLayout({
       <NavBar />
       <OnboardingModal />
       <main className="min-h-screen bg-gray-50">
-        {children}
+        <PageTransition>
+          {children}
+        </PageTransition>
       </main>
     </>
   )
