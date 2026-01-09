@@ -110,7 +110,7 @@ export default function MessagesPage() {
       .select("id")
       .eq("user_a", userA)
       .eq("user_b", userB)
-      .maybeSingle()
+      .maybeSingle<DirectMessageThread>()
 
     if (existing?.id) {
       await loadThreads(existing.id)
