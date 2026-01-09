@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState, Suspense } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
@@ -18,7 +18,7 @@ type ThreadWithProfiles = DirectMessageThread & {
   user_b_profile: Pick<User, "id" | "username" | "avatar_url"> | null
 }
 
-export default function MessagesPage() {
+function MessagesContent() {
   const supabase = createClient()
   const searchParams = useSearchParams()
   const { toast } = useToast()
@@ -119,7 +119,7 @@ export default function MessagesPage() {
 
     const { data: created, error } = await supabase
       .from("dm_threads")
-      .insert({ user_a: userA, user_b: userB })
+      .insert({ user_a: userA, user_b: userB } as any)
       .select("id")
       .single()
 
@@ -132,7 +132,7 @@ export default function MessagesPage() {
       return
     }
 
-    await loadThreads(created.id)
+    await loadThreads((created as any).id)
   }
 
   useEffect(() => {
@@ -171,7 +171,7 @@ export default function MessagesPage() {
         thread_id: selectedThreadId,
         sender_id: currentUser.id,
         body: draft.trim(),
-      })
+      } as any)
       .select("*")
       .single()
 
@@ -342,5 +342,13 @@ export default function MessagesPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={<div className="max-w-6xl mx-auto px-4 py-8">Loading messages...</div>}>
+      <MessagesContent />
+    </Suspense>
   )
 }
