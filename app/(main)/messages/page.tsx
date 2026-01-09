@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState, Suspense } from "react"
+import { useEffect, useMemo, useRef, useState, Suspense, useCallback } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
@@ -46,7 +46,8 @@ function MessagesContent() {
     fetchUser()
   }, [supabase])
 
-  const loadThreads = async (preferredThreadId?: string) => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const loadThreads = useCallback(async (preferredThreadId?: string) => {
     const { data, error } = await supabase
       .from("dm_threads")
       .select(`
@@ -76,12 +77,13 @@ function MessagesContent() {
       return
     }
 
-    if (!selectedThreadId && threadData.length > 0) {
-      setSelectedThreadId(threadData[0].id)
+    if (threadData.length > 0) {
+      setSelectedThreadId((current) => current || threadData[0].id)
     }
-  }
+  }, [supabase, toast])
 
-  const loadMessages = async (threadId: string) => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const loadMessages = useCallback(async (threadId: string) => {
     const { data, error } = await supabase
       .from("dm_messages")
       .select("*")
@@ -98,9 +100,10 @@ function MessagesContent() {
     }
 
     setMessages((data || []) as DirectMessage[])
-  }
+  }, [supabase, toast])
 
-  const ensureThreadForUser = async (targetUserId: string) => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const ensureThreadForUser = useCallback(async (targetUserId: string) => {
     if (!currentUser || !targetUserId || targetUserId === currentUser.id) return
 
     const [userA, userB] = [currentUser.id, targetUserId].sort()
@@ -133,24 +136,50 @@ function MessagesContent() {
     }
 
     await loadThreads((created as any).id)
-  }
+  }, [currentUser, supabase, toast, loadThreads])
 
   useEffect(() => {
     if (!currentUser) return
     loadThreads()
-  }, [currentUser])
+  }, [currentUser, loadThreads])
 
   useEffect(() => {
     if (!currentUser) return
     const targetUserId = searchParams.get("user")
     if (!targetUserId) return
     ensureThreadForUser(targetUserId)
-  }, [currentUser, searchParams])
+  }, [currentUser, searchParams, ensureThreadForUser])
 
   useEffect(() => {
     if (!selectedThreadId) return
     loadMessages(selectedThreadId)
-  }, [selectedThreadId])
+
+    const channel = supabase
+      .channel(`thread:${selectedThreadId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "dm_messages",
+          filter: `thread_id=eq.${selectedThreadId}`,
+        },
+        (payload) => {
+          const newMessage = payload.new as DirectMessage
+          setMessages((prev) => {
+            if (prev.some((msg) => msg.id === newMessage.id)) {
+              return prev
+            }
+            return [...prev, newMessage]
+          })
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [selectedThreadId, supabase, loadMessages])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
