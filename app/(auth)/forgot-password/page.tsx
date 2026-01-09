@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -9,23 +8,21 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/lib/hooks/use-toast"
+import { ArrowLeft } from "lucide-react"
 
-export default function LoginPage() {
+export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
   const { toast } = useToast()
   const supabase = createClient()
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleReset = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/callback?next=/update-password`,
       })
 
       if (error) {
@@ -37,14 +34,10 @@ export default function LoginPage() {
         return
       }
 
-      if (data?.user) {
-        toast({
-          title: "Success",
-          description: "Logged in successfully",
-        })
-        router.push("/")
-        router.refresh()
-      }
+      toast({
+        title: "Check your email",
+        description: "We've sent you a password reset link.",
+      })
     } catch (error) {
       toast({
         title: "Error",
@@ -60,14 +53,14 @@ export default function LoginPage() {
     <Card>
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold text-center">
-          Welcome back
+          Reset Password
         </CardTitle>
         <CardDescription className="text-center">
-          Enter your credentials to access your account
+          Enter your email address and we&apos;ll send you a link to reset your password
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleReset} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -80,36 +73,20 @@ export default function LoginPage() {
               disabled={loading}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={loading}
-            />
-          </div>
           <Button
             type="submit"
             className="w-full"
             disabled={loading}
           >
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? "Sending link..." : "Send Reset Link"}
           </Button>
         </form>
-        <div className="mt-4 text-center">
-          <Link href="/forgot-password" className="text-sm text-muted-foreground hover:text-primary hover:underline">
-            Forgot your password?
-          </Link>
-        </div>
       </CardContent>
       <CardFooter className="flex flex-col space-y-2">
-        <div className="text-sm text-muted-foreground text-center">
-          Don&apos;t have an account?{" "}
-          <Link href="/signup" className="text-primary hover:underline">
-            Sign up
+        <div className="text-sm text-center">
+          <Link href="/login" className="text-primary hover:underline inline-flex items-center">
+            <ArrowLeft className="w-3 h-3 mr-1" />
+            Back to login
           </Link>
         </div>
       </CardFooter>
