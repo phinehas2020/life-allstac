@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { MediaGallery } from "@/components/media-gallery"
-import { UserPlus, UserMinus, Settings, Camera, Clock } from "lucide-react"
+import { UserPlus, UserMinus, Settings, Camera, Clock, MessageCircle } from "lucide-react"
 import { useToast } from "@/lib/hooks/use-toast"
 import { PhotographerBadge } from "@/components/photographer-badge"
 import type { Database, User, PostWithUser } from "@/lib/types/database"
@@ -275,24 +275,32 @@ export default function ProfilePage() {
                   </Link>
                 </>
               ) : currentUser ? (
-                <Button
-                  onClick={handleFollow}
-                  variant={isFollowing ? "outline" : "default"}
-                  size="sm"
-                  className={`rounded-full font-medium ${isFollowing ? "border-2" : "shadow-md"}`}
-                >
-                  {isFollowing ? (
-                    <>
-                      <UserMinus className="w-4 h-4 mr-2" />
-                      Unfollow
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="w-4 h-4 mr-2" />
-                      Follow
-                    </>
-                  )}
-                </Button>
+                <>
+                  <Button
+                    onClick={handleFollow}
+                    variant={isFollowing ? "outline" : "default"}
+                    size="sm"
+                    className={`rounded-full font-medium ${isFollowing ? "border-2" : "shadow-md"}`}
+                  >
+                    {isFollowing ? (
+                      <>
+                        <UserMinus className="w-4 h-4 mr-2" />
+                        Unfollow
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        Follow
+                      </>
+                    )}
+                  </Button>
+                  <Link href={`/messages?user=${user.id}`}>
+                    <Button variant="outline" size="sm" className="rounded-full border-2 font-medium">
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      Message
+                    </Button>
+                  </Link>
+                </>
               ) : (
                 <Link href="/login">
                   <Button size="sm" className="rounded-full shadow-md">
