@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, Save } from "lucide-react"
+import Link from "next/link"
+import { Loader2, Save, Shield } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import {
   Card,
@@ -153,6 +154,15 @@ export default function SettingsPage() {
         <p className="text-muted-foreground">
           Update how your profile appears to the community.
         </p>
+
+        <div className="mt-4">
+          <Link href="/settings/security">
+            <Button variant="outline" className="gap-2">
+              <Shield className="w-4 h-4" />
+              Security Settings
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <Card>
