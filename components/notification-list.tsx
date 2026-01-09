@@ -62,7 +62,7 @@ export function NotificationList() {
         setNotifications(notificationsWithResources)
 
         // Mark unread notifications as read now that the user has viewed them.
-        const unreadIds = notificationsWithResources
+        const unreadIds = typedData
           .filter((n) => !n.is_read)
           .map((n) => n.id)
 
