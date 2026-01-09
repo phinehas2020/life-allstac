@@ -325,7 +325,7 @@ export interface Database {
           id: string
           user_id: string
           actor_id: string
-          type: 'like' | 'comment' | 'follow'
+          type: 'like' | 'comment' | 'follow' | 'message'
           resource_id: string | null
           content: string | null
           is_read: boolean
@@ -335,7 +335,7 @@ export interface Database {
           id?: string
           user_id: string
           actor_id: string
-          type: 'like' | 'comment' | 'follow'
+          type: 'like' | 'comment' | 'follow' | 'message'
           resource_id?: string | null
           content?: string | null
           is_read?: boolean
@@ -345,7 +345,7 @@ export interface Database {
           id?: string
           user_id?: string
           actor_id?: string
-          type?: 'like' | 'comment' | 'follow'
+          type?: 'like' | 'comment' | 'follow' | 'message'
           resource_id?: string | null
           content?: string | null
           is_read?: boolean

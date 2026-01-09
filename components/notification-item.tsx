@@ -2,7 +2,7 @@
 
 import { formatDistanceToNow } from "date-fns"
 import { motion } from "framer-motion"
-import { Heart, MessageCircle, UserPlus, FileQuestion } from "lucide-react"
+import { Heart, MessageCircle, UserPlus, FileQuestion, Mail } from "lucide-react"
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils/cn"
@@ -23,6 +23,8 @@ export function NotificationItem({ notification }: NotificationItemProps) {
         return <MessageCircle className="w-3.5 h-3.5 text-blue-500 fill-current" />
       case "follow":
         return <UserPlus className="w-3.5 h-3.5 text-emerald-500" />
+      case "message":
+        return <Mail className="w-3.5 h-3.5 text-purple-500" />
       default:
         return <FileQuestion className="w-3.5 h-3.5 text-gray-400" />
     }
@@ -36,6 +38,8 @@ export function NotificationItem({ notification }: NotificationItemProps) {
         return "bg-blue-50"
       case "follow":
         return "bg-emerald-50"
+      case "message":
+        return "bg-purple-50"
       default:
         return "bg-gray-50"
     }
@@ -49,13 +53,15 @@ export function NotificationItem({ notification }: NotificationItemProps) {
         return "commented on your post"
       case "follow":
         return "started following you"
+      case "message":
+        return "sent you a message"
       default:
         return "interacted with you"
     }
   }
 
   const getContentPreview = () => {
-    if (type === "comment" && content) {
+    if ((type === "comment" || type === "message") && content) {
       return <p className="text-sm text-gray-500 mt-1 line-clamp-1">&quot;{content}&quot;</p>
     }
     return null
@@ -64,6 +70,9 @@ export function NotificationItem({ notification }: NotificationItemProps) {
   const getLinkHref = () => {
     if (type === "follow") {
       return `/profile/${actor.username}`
+    }
+    if (type === "message" && notification.resource_id) {
+      return `/dm/${notification.resource_id}`
     }
     if (resource && (type === "like" || type === "comment")) {
       return `/post/${resource.id}`

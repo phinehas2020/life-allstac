@@ -33,7 +33,7 @@ export function NotificationList() {
       } else {
         const typedData = data as NotificationWithActor[]
         const resourceIds = typedData
-          .filter((notification) => notification.type !== "follow" && notification.resource_id)
+          .filter((notification) => notification.type !== "follow" && notification.type !== "message" && notification.resource_id)
           .map((notification) => notification.resource_id)
 
         let notificationsWithResources = typedData
