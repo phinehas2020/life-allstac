@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Home, Search, Upload, User, Calendar, LogOut, Trophy, Shield, Bell } from "lucide-react"
+import { Home, Search, Upload, User, Calendar, LogOut, Trophy, Shield, Bell, MessageCircle } from "lucide-react"
 import { useEffect, useState } from "react"
 import { staggerContainer, fadeUp } from "@/lib/animations/variants"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
@@ -216,6 +216,11 @@ export function NavBar() {
 
             {user ? (
               <>
+                <Link href="/messages">
+                  <Button variant="ghost" size="icon" className="rounded-full w-10 h-10 hover:bg-secondary">
+                    <MessageCircle className="w-5 h-5" />
+                  </Button>
+                </Link>
                 <Link href="/notifications">
                   <Button variant="ghost" size="icon" className="rounded-full w-10 h-10 hover:bg-secondary relative">
                     <Bell className="w-5 h-5" />
@@ -375,6 +380,14 @@ export function NavBar() {
 
             {user ? (
               <>
+                <Link
+                  href="/messages"
+                  className="flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium text-gray-600 hover:bg-gray-50"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <MessageCircle className="w-5 h-5" />
+                  <span>Messages</span>
+                </Link>
                 <Link
                   href={`/profile/${userData?.username || user.id}`}
                   className="flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium text-gray-600 hover:bg-gray-50"
