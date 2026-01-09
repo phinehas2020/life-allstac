@@ -351,6 +351,49 @@ export interface Database {
           is_read?: boolean
         }
       }
+      dm_threads: {
+        Row: {
+          id: string
+          user_a: string
+          user_b: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_a: string
+          user_b: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_a?: string
+          user_b?: string
+          created_at?: string
+        }
+      }
+      dm_messages: {
+        Row: {
+          id: string
+          thread_id: string
+          sender_id: string
+          body: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          thread_id: string
+          sender_id: string
+          body: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          thread_id?: string
+          sender_id?: string
+          body?: string
+          created_at?: string
+        }
+      }
     }
     Views: {}
     Functions: {
@@ -394,6 +437,8 @@ export type Follow = Database['public']['Tables']['follows']['Row']
 export type EventFollow = Database['public']['Tables']['event_follows']['Row']
 export type Download = Database['public']['Tables']['downloads']['Row']
 export type Notification = Database['public']['Tables']['notifications']['Row']
+export type DirectMessageThread = Database['public']['Tables']['dm_threads']['Row']
+export type DirectMessage = Database['public']['Tables']['dm_messages']['Row']
 
 // Extended types with relations
 export interface PostWithUser extends Post {
