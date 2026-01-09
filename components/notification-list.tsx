@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { NotificationItem } from "@/components/notification-item"
 import { Loader2, BellOff } from "lucide-react"
-import { type NotificationWithActor } from "@/lib/types/database"
+import { type NotificationWithActor, type Post } from "@/lib/types/database"
 
 export function NotificationList() {
   const [notifications, setNotifications] = useState<NotificationWithActor[]>([])
@@ -20,8 +20,7 @@ export function NotificationList() {
         .from("notifications")
         .select(`
           *,
-          actor:users!actor_id(*),
-          resource:posts(*)
+          actor:users!actor_id(*)
         `)
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
@@ -31,7 +30,36 @@ export function NotificationList() {
         console.error("Error fetching notifications:", error)
       } else {
         const typedData = data as NotificationWithActor[]
-        setNotifications(typedData)
+        const resourceIds = typedData
+          .filter((notification) => notification.type !== "follow" && notification.resource_id)
+          .map((notification) => notification.resource_id)
+
+        let notificationsWithResources = typedData
+
+        if (resourceIds.length > 0) {
+          const { data: resources, error: resourcesError } = await supabase
+            .from("posts")
+            .select("*")
+            .in("id", resourceIds)
+
+          if (resourcesError) {
+            console.error("Error fetching notification resources:", resourcesError)
+          } else {
+            const resourcesList = (resources ?? []) as Post[]
+            const resourcesById = new Map(
+              resourcesList.map((resource) => [resource.id, resource])
+            )
+
+            notificationsWithResources = typedData.map((notification) => ({
+              ...notification,
+              resource: notification.resource_id
+                ? resourcesById.get(notification.resource_id) ?? null
+                : null,
+            }))
+          }
+        }
+
+        setNotifications(notificationsWithResources)
 
         // Mark unread notifications as read now that the user has viewed them.
         const unreadIds = typedData
