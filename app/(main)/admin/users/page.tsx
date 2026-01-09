@@ -21,6 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Search, ChevronLeft, ChevronRight, User as UserIcon } from "lucide-react"
+import { UserActions } from "@/components/admin/user-actions"
 
 export default async function AdminUsersPage({
   searchParams,
@@ -159,11 +160,7 @@ export default async function AdminUsersPage({
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Link href={`/profile/${user.username}`}>
-                        <Button variant="ghost" size="sm">
-                            View Profile
-                        </Button>
-                    </Link>
+                    <UserActions user={user} />
                   </TableCell>
                 </TableRow>
               ))}
