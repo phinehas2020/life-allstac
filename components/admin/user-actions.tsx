@@ -23,7 +23,7 @@ export function UserActions({ user }: UserActionsProps) {
     setLoading(true)
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(user.email!, {
-        redirectTo: `${window.location.origin}/auth/callback?next=/settings/security`,
+        redirectTo: `${window.location.origin}/auth/callback?next=/update-password`,
       })
 
       if (error) throw error
