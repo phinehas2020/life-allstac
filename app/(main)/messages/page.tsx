@@ -119,7 +119,7 @@ export default function MessagesPage() {
 
     const { data: created, error } = await supabase
       .from("dm_threads")
-      .insert<Database["public"]["Tables"]["dm_threads"]["Insert"]>({ user_a: userA, user_b: userB })
+      .insert({ user_a: userA, user_b: userB } as Database["public"]["Tables"]["dm_threads"]["Insert"])
       .select("id")
       .single()
 
