@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AVKit
 
 struct PostFullScreenView: View {
     let post: Post
@@ -19,6 +20,8 @@ struct PostFullScreenView: View {
     @State private var scale: CGFloat = 1.0
     @State private var offset: CGSize = .zero
     @State private var isDragging = false
+    @State private var isPlayingVideo = false
+    @State private var player: AVPlayer?
 
     init(post: Post, showComments: Binding<Bool>) {
         self.post = post
@@ -119,7 +122,21 @@ struct PostFullScreenView: View {
         let displayUrl = post.isVideo ? (post.thumbnailUrl ?? post.mediaUrl) : post.mediaUrl
 
         return Group {
-            if let url = URL(string: displayUrl) {
+            if post.isVideo && isPlayingVideo {
+                // Video player
+                if let player = player {
+                    VideoPlayer(player: player)
+                        .frame(maxWidth: geometry.size.width)
+                        .aspectRatio(post.aspectRatio, contentMode: .fit)
+                        .onDisappear {
+                            player.pause()
+                        }
+                } else {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                }
+            } else if let url = URL(string: displayUrl) {
+                // Thumbnail/Image
                 CachedAsyncImage(url: url) { image in
                     image
                         .resizable()
@@ -139,14 +156,29 @@ struct PostFullScreenView: View {
         .onTapGesture(count: 2) {
             handleDoubleTap()
         }
-        .overlay {
-            if post.isVideo {
-                Image(systemName: "play.circle.fill")
-                    .font(.system(size: 70))
-                    .foregroundColor(.white.opacity(0.9))
-                    .shadow(color: .black.opacity(0.3), radius: 10)
+        .onTapGesture(count: 1) {
+            if post.isVideo && !isPlayingVideo {
+                playVideo()
             }
         }
+        .overlay {
+            if post.isVideo && !isPlayingVideo {
+                Button(action: playVideo) {
+                    Image(systemName: "play.circle.fill")
+                        .font(.system(size: 70))
+                        .foregroundColor(.white.opacity(0.9))
+                        .shadow(color: .black.opacity(0.3), radius: 10)
+                }
+            }
+        }
+    }
+
+    private func playVideo() {
+        guard let videoURL = URL(string: post.mediaUrl) else { return }
+        HapticManager.impact(.medium)
+        player = AVPlayer(url: videoURL)
+        isPlayingVideo = true
+        player?.play()
     }
 
     // MARK: - Bottom Bar
