@@ -9,10 +9,16 @@ import SwiftUI
 
 struct ProfileView: View {
     @EnvironmentObject var authManager: AuthenticationManager
+    let username: String?
     @State private var profile: UserProfile?
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var selectedPost: Post?
+    @State private var navigatingToChat: MessageThread? = nil
+    
+    init(username: String? = nil) {
+        self.username = username
+    }
 
     private let columns = [
         GridItem(.flexible(), spacing: 2),
@@ -80,6 +86,9 @@ struct ProfileView: View {
             }
             .navigationDestination(item: $selectedPost) { post in
                 PostDetailView(postId: post.id)
+            }
+            .navigationDestination(item: $navigatingToChat) { thread in
+                ChatView(thread: thread)
             }
         }
     }
@@ -167,11 +176,25 @@ struct ProfileView: View {
     // MARK: - Action Buttons
     private var actionButtons: some View {
         HStack(spacing: Theme.Spacing.md) {
-            Button(action: {}) {
-                Text("Edit Profile")
-                    .frame(maxWidth: .infinity)
+            if isCurrentUser {
+                Button(action: {}) {
+                    Text("Edit Profile")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(SecondaryButtonStyle())
+            } else {
+                Button(action: {}) {
+                    Text("Follow")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(GradientButtonStyle())
+                
+                Button(action: startChat) {
+                    Text("Message")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(SecondaryButtonStyle())
             }
-            .buttonStyle(SecondaryButtonStyle())
 
             Button(action: {}) {
                 Image(systemName: "square.and.arrow.up")
@@ -179,6 +202,39 @@ struct ProfileView: View {
             .buttonStyle(SecondaryButtonStyle())
         }
         .padding(.horizontal)
+    }
+    
+    private var isCurrentUser: Bool {
+        guard let profile = profile else { return true }
+        return profile.userModel.id == authManager.currentUser?.id
+    }
+    
+    private func startChat() {
+        guard let profile = profile else { return }
+        HapticManager.impact(.light)
+        
+        Task {
+            do {
+                let threadId = try await ApiService.shared.getOrCreateThread(targetUserId: profile.userModel.id)
+                let thread = MessageThread(
+                    id: threadId,
+                    userA: authManager.currentUser?.id ?? "",
+                    userB: profile.userModel.id,
+                    createdAt: "",
+                    userAProfile: nil,
+                    userBProfile: UserSummary(
+                        id: profile.userModel.id,
+                        username: profile.userModel.username,
+                        avatarUrl: profile.userModel.avatar_url
+                    )
+                )
+                await MainActor.run {
+                    navigatingToChat = thread
+                }
+            } catch {
+                print("❌ [Profile] Failed to start chat: \(error)")
+            }
+        }
     }
 
     // MARK: - Posts Grid
@@ -285,18 +341,22 @@ struct ProfileView: View {
 
     // MARK: - Load Profile
     private func loadProfile() async {
-        guard let currentUser = authManager.currentUser else {
-            print("ProfileView: No current user")
+        let usernameToFetch: String
+        
+        if let username = username {
+            usernameToFetch = username
+        } else if let currentUser = authManager.currentUser {
+            usernameToFetch = currentUser.username ?? currentUser.email ?? currentUser.id
+        } else {
+            print("ProfileView: No user context")
             return
         }
-
-        let username = currentUser.username ?? currentUser.email ?? currentUser.id
 
         isLoading = true
         errorMessage = nil
 
         do {
-            let userProfile = try await ApiService.shared.fetchUserProfile(username: username)
+            let userProfile = try await ApiService.shared.fetchUserProfile(username: usernameToFetch)
             withAnimation(.smooth) {
                 profile = userProfile
                 isLoading = false

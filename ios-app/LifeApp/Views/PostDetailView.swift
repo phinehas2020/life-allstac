@@ -35,22 +35,25 @@ struct PostDetailView: View {
                     // Post info
                     VStack(alignment: .leading, spacing: 12) {
                         // User info
-                        HStack {
-                            Circle()
-                                .fill(Color.blue.opacity(0.3))
-                                .frame(width: 40, height: 40)
-                                .overlay(
-                                    Text(post.displayUsername.prefix(1).uppercased())
-                                        .font(.caption)
-                                        .foregroundColor(.blue)
-                                )
-                            
-                            Text(post.displayUsername)
-                                .font(.subheadline)
-                                .fontWeight(.semibold)
-                            
-                            Spacer()
+                        NavigationLink(destination: ProfileView(username: post.displayUsername)) {
+                            HStack {
+                                Circle()
+                                    .fill(Theme.subtleGradient)
+                                    .frame(width: 40, height: 40)
+                                    .overlay(
+                                        Text(post.displayUsername.prefix(1).uppercased())
+                                            .font(Theme.Fonts.label())
+                                            .foregroundColor(Theme.accent)
+                                    )
+                                
+                                Text(post.displayUsername)
+                                    .font(Theme.Fonts.label())
+                                    .foregroundColor(Theme.text)
+                                
+                                Spacer()
+                            }
                         }
+                        .buttonStyle(PlainButtonStyle())
                         
                         // Caption
                         if let caption = post.caption {
@@ -189,7 +192,7 @@ struct PostDetailView: View {
     }
     
     private func checkExistingRating() async {
-        guard let currentUser = authManager.currentUser else { return }
+        guard authManager.currentUser != nil else { return }
         
         do {
             let rating = try await ApiService.shared.fetchExistingRating(postId: postId)

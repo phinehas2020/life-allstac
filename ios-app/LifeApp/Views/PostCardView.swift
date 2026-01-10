@@ -118,7 +118,8 @@ struct PostCardView: View {
     private var mediaView: some View {
         ZStack {
             // Main image with blurhash placeholder
-            if let url = URL(string: post.mediaUrl) {
+            let displayUrlString = post.isVideo ? (post.thumbnailUrl ?? post.mediaUrl) : post.mediaUrl
+            if let url = URL(string: displayUrlString) {
                 GeometryReader { geometry in
                     CachedAsyncImage(url: url) { image in
                         image
@@ -267,11 +268,7 @@ struct PostCardView: View {
     private var captionView: some View {
         if let caption = post.caption, !caption.isEmpty {
             (
-                Text(post.displayUsername)
-                    .font(Theme.Fonts.body().weight(.semibold))
-                    .foregroundColor(Theme.text)
-                + Text(" ")
-                + Text(caption)
+                Text("**\(post.displayUsername)** \(caption)")
                     .font(Theme.Fonts.body())
                     .foregroundColor(Theme.text)
             )

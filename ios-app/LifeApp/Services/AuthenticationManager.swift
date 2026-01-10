@@ -62,8 +62,19 @@ class AuthenticationManager: ObservableObject {
             
             let (data, response) = try await URLSession.shared.data(for: request)
             
-            guard let httpResponse = response as? HTTPURLResponse,
-                  httpResponse.statusCode == 200 else {
+            guard let httpResponse = response as? HTTPURLResponse else {
+                return
+            }
+            
+            if httpResponse.statusCode == 401 || httpResponse.statusCode == 403 {
+                print("❌ [AuthManager] Session expired or invalid. Logging out.")
+                await MainActor.run {
+                    self.logout()
+                }
+                return
+            }
+            
+            guard httpResponse.statusCode == 200 else {
                 print("❌ [AuthManager] Failed to fetch user: \(response)")
                 return
             }

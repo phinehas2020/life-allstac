@@ -1,5 +1,5 @@
 import type { MobileEventSummary, MobilePostPayload } from "@/lib/types/api"
-import type { Event, Like, Post, User } from "@/lib/types/database"
+import type { Comment, Event, Like, Post, User } from "@/lib/types/database"
 
 export type RawPostEventEntry =
   | { event: Pick<Event, "id" | "name" | "slug" | "cover_image"> | null }
@@ -8,16 +8,18 @@ export type RawPostEventEntry =
 export type RawPost = Post & {
   user: Pick<User, "id" | "username" | "avatar_url" | "photographer_status" | "photographer_influence"> | null
   likes: Pick<Like, "user_id">[] | null
-  comments: { id: string }[] | null
+  comments: (Pick<Comment, "id" | "content" | "created_at"> & {
+    user: Pick<User, "id" | "username" | "avatar_url"> | null
+  })[] | null
   downloads: { id: string }[] | null
   post_events: RawPostEventEntry[] | null
 }
 
 export const POST_SELECTION = `
   *,
-  user:users!posts_user_id_fkey(id, username, avatar_url, photographer_status, photographer_influence),
+  user:users(id, username, avatar_url, photographer_status, photographer_influence),
   likes(user_id),
-  comments(id, content, created_at, user:users!comments_user_id_fkey(id, username, avatar_url)),
+  comments(id, content, created_at, user:users(id, username, avatar_url)),
   downloads(id),
   post_events(
     event:events(id, name, slug, cover_image)
@@ -26,7 +28,7 @@ export const POST_SELECTION = `
 
 export const POST_SELECTION_EVENT_FILTER = `
   *,
-  user:users!posts_user_id_fkey(id, username, avatar_url, photographer_status, photographer_influence),
+  user:users(id, username, avatar_url, photographer_status, photographer_influence),
   likes(user_id),
   comments(id),
   downloads(id),

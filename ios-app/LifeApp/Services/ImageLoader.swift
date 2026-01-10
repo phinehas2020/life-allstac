@@ -151,7 +151,20 @@ class ImageLoader: ObservableObject {
 
         task = Task { [weak self] in
             do {
-                let (data, _) = try await URLSession.shared.data(from: url)
+                var request = URLRequest(url: url)
+                if let token = AuthTokenManager.shared.getAccessToken() {
+                    request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+                }
+                
+                let (data, response) = try await URLSession.shared.data(for: request)
+                
+                if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
+                    await MainActor.run { [weak self] in
+                        self?.error = NSError(domain: "ImageLoader", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "HTTP Error \(httpResponse.statusCode)"])
+                        self?.isLoading = false
+                    }
+                    return
+                }
 
                 guard !Task.isCancelled else { return }
 
@@ -191,7 +204,9 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
     private let content: (Image) -> Content
     private let placeholder: () -> Placeholder
 
-    @StateObject private var loader: ImageLoader
+    @State private var loadedImage: UIImage?
+    @State private var isLoading = false
+    @State private var loadError: Error?
 
     init(
         url: URL?,
@@ -201,17 +216,15 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
         self.url = url
         self.content = content
         self.placeholder = placeholder
-        _loader = StateObject(wrappedValue: ImageLoader(url: url))
     }
 
     var body: some View {
         Group {
-            if let uiImage = loader.image {
+            if let uiImage = loadedImage {
                 content(Image(uiImage: uiImage))
-            } else if loader.isLoading {
+            } else if isLoading {
                 placeholder()
-            } else if loader.error != nil {
-                // Error state - show placeholder with error indicator
+            } else if loadError != nil {
                 placeholder()
                     .overlay(
                         Image(systemName: "exclamationmark.triangle")
@@ -220,6 +233,61 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
                     )
             } else {
                 placeholder()
+            }
+        }
+        .onAppear {
+            loadImage()
+        }
+    }
+
+    private func loadImage() {
+        guard let url = url else {
+            loadError = NSError(domain: "CachedAsyncImage", code: -1, userInfo: nil)
+            return
+        }
+
+        // Check cache first
+        if let cachedImage = ImageCache.shared.image(for: url) {
+            loadedImage = cachedImage
+            return
+        }
+
+        isLoading = true
+
+        Task {
+            do {
+                var request = URLRequest(url: url)
+                if let token = AuthTokenManager.shared.getAccessToken() {
+                    request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+                }
+                
+                let (data, response) = try await URLSession.shared.data(for: request)
+                
+                if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
+                     await MainActor.run {
+                         loadError = NSError(domain: "CachedAsyncImage", code: httpResponse.statusCode, userInfo: nil)
+                         isLoading = false
+                     }
+                     return
+                }
+
+                if let image = UIImage(data: data) {
+                    ImageCache.shared.store(image, for: url)
+                    await MainActor.run {
+                        loadedImage = image
+                        isLoading = false
+                    }
+                } else {
+                    await MainActor.run {
+                        loadError = NSError(domain: "CachedAsyncImage", code: -2, userInfo: nil)
+                        isLoading = false
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    loadError = error
+                    isLoading = false
+                }
             }
         }
     }
@@ -285,7 +353,7 @@ extension UIImage {
 
         // Decode the average color (DC component)
         let quantisedMaximumValue = decode83(String(characters[1]))
-        let maximumValue = Float(quantisedMaximumValue + 1) / 166.0
+
 
         let dcValue = decode83(String(characters[2..<6]))
         let colors = decodeDC(dcValue)

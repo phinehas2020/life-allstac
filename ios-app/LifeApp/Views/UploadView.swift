@@ -54,7 +54,7 @@ struct UploadView: View {
                 matching: .any(of: [.images, .videos]),
                 photoLibrary: .shared()
             )
-            .onChange(of: viewModel.selectedItem) { newValue in
+            .onChange(of: viewModel.selectedItem) { _, newValue in
                 Task {
                     await viewModel.loadTransferable(from: newValue)
                 }

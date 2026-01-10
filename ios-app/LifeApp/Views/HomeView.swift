@@ -10,6 +10,8 @@ import SwiftUI
 struct HomeView: View {
     @StateObject private var viewModel = HomeViewModel()
     @State private var showScrollToTop = false
+    @State private var showingNotifications = false
+    @State private var showingMessages = false
     @Namespace private var scrollNamespace
 
     var body: some View {
@@ -35,7 +37,7 @@ struct HomeView: View {
                     .refreshable {
                         await viewModel.fetchPosts(refresh: true)
                     }
-                    .onChange(of: showScrollToTop) { newValue in
+                    .onChange(of: showScrollToTop) { _, newValue in
                         if newValue {
                             withAnimation(.smooth) {
                                 proxy.scrollTo("top", anchor: .top)
@@ -59,6 +61,12 @@ struct HomeView: View {
                 }
             }
             .navigationBarHidden(true)
+            .navigationDestination(isPresented: $showingNotifications) {
+                NotificationsView()
+            }
+            .navigationDestination(isPresented: $showingMessages) {
+                MessagesView()
+            }
         }
         .onAppear {
             if viewModel.posts.isEmpty {
@@ -80,7 +88,10 @@ struct HomeView: View {
             Spacer()
 
             // Notification button
-            Button(action: {}) {
+            Button(action: {
+                HapticManager.impact(.light)
+                showingNotifications = true
+            }) {
                 ZStack {
                     Image(systemName: "bell")
                         .font(.title2)
@@ -92,6 +103,17 @@ struct HomeView: View {
                         .frame(width: 8, height: 8)
                         .offset(x: 8, y: -8)
                 }
+            }
+            .padding(.trailing, Theme.Spacing.sm)
+
+            // Message button
+            Button(action: {
+                HapticManager.impact(.light)
+                showingMessages = true
+            }) {
+                Image(systemName: "message")
+                    .font(.title2)
+                    .foregroundColor(Theme.text)
             }
         }
         .padding(.horizontal, Theme.Spacing.md)
@@ -116,22 +138,26 @@ struct HomeView: View {
     }
 
     // MARK: - Feed
+    @ViewBuilder
     private var feedView: some View {
         ForEach(Array(viewModel.posts.enumerated()), id: \.element.id) { index, post in
-            PostCardView(post: post)
-                .onAppear {
-                    // Efficient threshold-based pagination
-                    let threshold = viewModel.posts.count - 5
-                    if index >= threshold && viewModel.hasMore && !viewModel.isLoading {
-                        Task {
-                            await viewModel.loadMore()
+            NavigationLink(destination: PostDetailView(postId: post.id)) {
+                PostCardView(post: post)
+                    .onAppear {
+                        // Efficient threshold-based pagination
+                        let threshold = viewModel.posts.count - 5
+                        if index >= threshold && viewModel.hasMore && !viewModel.isLoading {
+                            Task {
+                                await viewModel.loadMore()
+                            }
                         }
                     }
-                }
-                .transition(.asymmetric(
-                    insertion: .opacity.combined(with: .move(edge: .bottom)),
-                    removal: .opacity
-                ))
+                    .transition(.asymmetric(
+                        insertion: .opacity.combined(with: .move(edge: .bottom)),
+                        removal: .opacity
+                    ))
+            }
+            .buttonStyle(PlainButtonStyle())
         }
 
         // Loading more indicator

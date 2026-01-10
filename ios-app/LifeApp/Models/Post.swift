@@ -7,7 +7,15 @@
 
 import Foundation
 
-struct Post: Codable, Identifiable {
+struct Post: Codable, Identifiable, Hashable {
+    static func == (lhs: Post, rhs: Post) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+
     let id: String
     let caption: String?
     let mediaUrl: String  // camelCase from API

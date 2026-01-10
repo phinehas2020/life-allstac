@@ -7,7 +7,15 @@
 
 import Foundation
 
-struct Event: Codable, Identifiable {
+struct Event: Codable, Identifiable, Hashable {
+    static func == (lhs: Event, rhs: Event) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+
     let id: String
     let name: String
     let slug: String

@@ -38,7 +38,7 @@ export async function POST(
       id,
       content,
       created_at,
-      user:users!comments_user_id_fkey(id, username, avatar_url)
+      user:users(id, username, avatar_url)
     `)
     .single()
 
@@ -55,10 +55,10 @@ export async function POST(
     createdAt: comment.created_at,
     user: comment.user
       ? {
-          id: comment.user.id,
-          username: comment.user.username,
-          avatarUrl: comment.user.avatar_url,
-        }
+        id: comment.user.id,
+        username: comment.user.username,
+        avatarUrl: comment.user.avatar_url,
+      }
       : null,
   })
 }

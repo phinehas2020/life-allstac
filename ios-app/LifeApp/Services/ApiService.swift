@@ -208,8 +208,8 @@ class ApiService {
             print("📡 [API] Response status: \(httpResponse.statusCode)")
             
             if httpResponse.statusCode != 200 {
-                let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
-                print("❌ [API] Error response: \(errorBody)")
+                let errorBody = String(data: data, encoding: .utf8) ?? "Empty/Non-UTF8 body"
+                print("❌ [API] Error response status \(httpResponse.statusCode): \(errorBody.isEmpty ? "EMPTY BODY" : errorBody)")
                 throw ApiError.httpError(httpResponse.statusCode)
             }
             
@@ -591,6 +591,167 @@ class ApiService {
         }
     }
 
+    // MARK: - Notifications
+
+    func fetchNotifications() async throws -> NotificationsResponse {
+        let urlString = "\(baseURL)/notifications"
+        print("🔔 [API] Fetching notifications - URL: \(urlString)")
+
+        guard let url = URL(string: urlString) else {
+            throw ApiError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        if let token = AuthTokenManager.shared.getAccessToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw ApiError.invalidResponse
+            }
+
+            if httpResponse.statusCode != 200 {
+                let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
+                print("❌ [API] Error fetching notifications: \(errorBody)")
+                throw ApiError.httpError(httpResponse.statusCode)
+            }
+
+            let decoded = try JSONDecoder().decode(NotificationsResponse.self, from: data)
+            print("✅ [API] Decoded \(decoded.notifications.count) notifications")
+            return decoded
+        } catch {
+            print("❌ [API] Decode error notifications: \(error.localizedDescription)")
+            throw error
+        }
+    }
+
+    func markNotificationsAsRead(ids: [String]) async throws {
+        guard !ids.isEmpty else { return }
+        
+        guard let url = URL(string: "\(baseURL)/notifications") else {
+            throw ApiError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        if let token = AuthTokenManager.shared.getAccessToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        let body = ["ids": ids]
+        request.httpBody = try JSONEncoder().encode(body)
+
+        let (_, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw ApiError.invalidResponse
+        }
+    }
+
+    // MARK: - Direct Messages
+    
+    func fetchMessageThreads() async throws -> MessageThreadsResponse {
+        guard let url = URL(string: "\(baseURL)/messages/threads") else {
+            throw ApiError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        if let token = AuthTokenManager.shared.getAccessToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw ApiError.invalidResponse
+        }
+        
+        return try JSONDecoder().decode(MessageThreadsResponse.self, from: data)
+    }
+    
+    func fetchMessages(threadId: String) async throws -> MessagesResponse {
+        guard let url = URL(string: "\(baseURL)/messages/\(threadId)") else {
+            throw ApiError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        if let token = AuthTokenManager.shared.getAccessToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw ApiError.invalidResponse
+        }
+        
+        return try JSONDecoder().decode(MessagesResponse.self, from: data)
+    }
+    
+    func sendMessage(threadId: String, body: String) async throws -> Message {
+        guard let url = URL(string: "\(baseURL)/messages/\(threadId)") else {
+            throw ApiError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        if let token = AuthTokenManager.shared.getAccessToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        
+        let payload = ["body": body]
+        request.httpBody = try JSONEncoder().encode(payload)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              (httpResponse.statusCode == 200 || httpResponse.statusCode == 201) else {
+            throw ApiError.invalidResponse
+        }
+        
+        let decoded = try JSONDecoder().decode(SendMessageResponse.self, from: data)
+        return decoded.message
+    }
+    
+    func getOrCreateThread(targetUserId: String) async throws -> String {
+        guard let url = URL(string: "\(baseURL)/messages/threads") else {
+            throw ApiError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        if let token = AuthTokenManager.shared.getAccessToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        
+        let payload = ["targetUserId": targetUserId]
+        request.httpBody = try JSONEncoder().encode(payload)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              (httpResponse.statusCode == 200 || httpResponse.statusCode == 201) else {
+            throw ApiError.invalidResponse
+        }
+        
+        let decoded = try JSONDecoder().decode(CreateThreadResponse.self, from: data)
+        return decoded.threadId
+    }
+
     // MARK: - Upload
 
     func uploadPost(imageData: Data, caption: String?, eventId: String?) async throws {
@@ -647,8 +808,8 @@ class ApiService {
             print("📤 [API] Upload response status: \(httpResponse.statusCode)")
 
             if httpResponse.statusCode != 200 && httpResponse.statusCode != 201 {
-                let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
-                print("❌ [API] Upload error: \(errorBody)")
+                let errorBody = String(data: data, encoding: .utf8) ?? "Empty/Non-UTF8 body"
+                print("❌ [API] Upload error status \(httpResponse.statusCode): \(errorBody.isEmpty ? "EMPTY BODY" : errorBody)")
                 throw ApiError.httpError(httpResponse.statusCode)
             }
 
@@ -662,23 +823,27 @@ class ApiService {
 
 // MARK: - Error Types
 
-enum ApiError: Error {
+enum ApiError: LocalizedError {
     case invalidURL
     case invalidResponse
     case httpError(Int)
     case decodingError(Error)
     
-    var localizedDescription: String {
+    var errorDescription: String? {
         switch self {
         case .invalidURL:
             return "Invalid URL. Please check Supabase configuration."
         case .invalidResponse:
             return "Invalid response from server."
         case .httpError(let code):
-            return "HTTP error \(code). Please check your credentials and try again."
+            return "Server returned error status \(code). Please try again later."
         case .decodingError(let error):
             return "Failed to parse response: \(error.localizedDescription)"
         }
+    }
+    
+    var localizedDescription: String {
+        return errorDescription ?? "Unknown error"
     }
 }
 

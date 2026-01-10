@@ -90,3 +90,105 @@ struct UserProfile: Codable {
         recentPosts
     }
 }
+
+// MARK: - Notifications
+
+struct LifeNotification: Codable, Identifiable {
+    let id: String
+    let userId: String
+    let actorId: String
+    let type: NotificationType
+    let resourceId: String?
+    let content: String?
+    var isRead: Bool
+    let createdAt: String
+    let actor: User?
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case userId = "user_id"
+        case actorId = "actor_id"
+        case type
+        case resourceId = "resource_id"
+        case content
+        case isRead = "is_read"
+        case createdAt = "created_at"
+        case actor
+    }
+}
+
+enum NotificationType: String, Codable {
+    case like
+    case comment
+    case follow
+    case message
+}
+
+struct NotificationsResponse: Codable {
+    let notifications: [LifeNotification]
+}
+
+
+// MARK: - Direct Messages
+
+struct MessageThread: Codable, Identifiable, Hashable {
+    let id: String
+    let userA: String
+    let userB: String
+    let createdAt: String
+    let userAProfile: UserSummary?
+    let userBProfile: UserSummary?
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case userA = "user_a"
+        case userB = "user_b"
+        case createdAt = "created_at"
+        case userAProfile = "user_a_profile"
+        case userBProfile = "user_b_profile"
+    }
+}
+
+struct Message: Codable, Identifiable {
+    let id: String
+    let threadId: String
+    let senderId: String
+    let body: String
+    let createdAt: String
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case threadId = "thread_id"
+        case senderId = "sender_id"
+        case body
+        case createdAt = "created_at"
+    }
+}
+
+struct UserSummary: Codable, Identifiable, Hashable {
+    let id: String
+    let username: String?
+    let avatarUrl: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case username
+        case avatarUrl = "avatar_url"
+    }
+}
+
+struct MessageThreadsResponse: Codable {
+    let threads: [MessageThread]
+}
+
+struct MessagesResponse: Codable {
+    let messages: [Message]
+}
+
+struct SendMessageResponse: Codable {
+    let message: Message
+}
+
+struct CreateThreadResponse: Codable {
+    let threadId: String
+}
