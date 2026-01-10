@@ -6,7 +6,11 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } },
 ) {
-  const supabase = createSupabaseApiClient()
+  // Extract token to create authenticated Supabase client
+  const authHeader = request.headers.get("authorization")
+  const token = authHeader?.replace("Bearer ", "").trim()
+
+  const supabase = createSupabaseApiClient(token)
   const currentUser = await getUserFromRequest(supabase, request)
   const postId = params.id
 
