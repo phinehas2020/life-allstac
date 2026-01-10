@@ -43,8 +43,9 @@ export async function POST(
     .single()
 
   if (error) {
+    console.error("[Comment API] Supabase error:", error)
     return jsonResponse(
-      { error: "Failed to create comment." },
+      { error: "Failed to create comment.", details: error.message },
       { status: 500 },
     )
   }
