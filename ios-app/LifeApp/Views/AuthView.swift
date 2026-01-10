@@ -23,7 +23,7 @@ struct AuthView: View {
             VStack(spacing: 30) {
                 // Header
                 VStack(spacing: 12) {
-                    Text("The Who")
+                    Text("Living the Life")
                         .font(Theme.Fonts.heading(size: 48))
                         .foregroundColor(Theme.text)
 

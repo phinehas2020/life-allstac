@@ -15,7 +15,7 @@ final class ImageCache {
     private let memoryCache = NSCache<NSString, UIImage>()
     private let fileManager = FileManager.default
     private let cacheDirectory: URL
-    private let maxMemoryCacheSize = 100 // Max number of images in memory
+    private let maxMemoryCacheSize = 300 // Max number of images in memory
     private let maxDiskCacheAge: TimeInterval = 7 * 24 * 60 * 60 // 7 days
 
     private init() {

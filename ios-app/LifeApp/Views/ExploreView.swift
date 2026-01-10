@@ -2,15 +2,14 @@
 //  ExploreView.swift
 //  LifeApp
 //
-//  Explore/discover view with cached images and modern grid
+//  Explore/discover view with pagination and cached images
 //
 
 import SwiftUI
 
 struct ExploreView: View {
-    @State private var posts: [Post] = []
+    @StateObject private var viewModel = ExploreViewModel()
     @State private var searchText = ""
-    @State private var isLoading = false
     @State private var selectedPost: Post?
 
     private let columns = [
@@ -31,10 +30,10 @@ struct ExploreView: View {
                         .padding(.vertical, Theme.Spacing.sm)
 
                     // Content
-                    if isLoading && posts.isEmpty {
+                    if viewModel.isLoading && viewModel.posts.isEmpty {
                         GridSkeleton(itemCount: 15)
                             .padding(.horizontal, 2)
-                    } else if posts.isEmpty {
+                    } else if viewModel.posts.isEmpty && !viewModel.isLoading {
                         emptyStateView
                     } else {
                         gridView
@@ -44,15 +43,18 @@ struct ExploreView: View {
             .navigationTitle("Explore")
             .navigationBarTitleDisplayMode(.large)
             .task {
-                await loadPosts()
+                if viewModel.posts.isEmpty {
+                    await viewModel.fetchPosts()
+                }
             }
             .refreshable {
-                await loadPosts()
+                await viewModel.fetchPosts(refresh: true)
             }
             .navigationDestination(item: $selectedPost) { post in
                 PostDetailView(postId: post.id)
             }
         }
+        .overlay(ToastContainerView())
     }
 
     // MARK: - Search Bar
@@ -66,10 +68,18 @@ struct ExploreView: View {
                 .font(Theme.Fonts.body())
                 .autocapitalization(.none)
                 .disableAutocorrection(true)
+                .onSubmit {
+                    Task {
+                        await viewModel.search(query: searchText)
+                    }
+                }
 
             if !searchText.isEmpty {
                 Button(action: {
                     searchText = ""
+                    Task {
+                        await viewModel.fetchPosts(refresh: true)
+                    }
                 }) {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundColor(Theme.secondaryText)
@@ -88,6 +98,33 @@ struct ExploreView: View {
             LazyVGrid(columns: columns, spacing: 2) {
                 ForEach(filteredPosts) { post in
                     gridItem(post)
+                        .onAppear {
+                            if post.id == filteredPosts.last?.id && viewModel.hasMore && !viewModel.isLoading {
+                                Task {
+                                    await viewModel.loadMore()
+                                }
+                            }
+                        }
+                }
+
+                // Loading more indicator
+                if viewModel.isLoading && !viewModel.posts.isEmpty {
+                    ProgressView()
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding()
+                }
+
+                // End of feed indicator
+                if !viewModel.hasMore && !viewModel.posts.isEmpty {
+                    VStack(spacing: 8) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.title)
+                            .foregroundColor(Theme.success)
+                        Text("You've seen it all!")
+                            .font(Theme.Fonts.body())
+                            .foregroundColor(Theme.secondaryText)
+                    }
+                    .padding(.vertical, Theme.Spacing.xl)
                 }
             }
             .padding(.horizontal, 2)
@@ -132,8 +169,8 @@ struct ExploreView: View {
                         }
                     }
 
-                    // Stats overlay on hover/press
-                    Color.black.opacity(0.001) // Invisible touch target
+                    // Stats overlay
+                    Color.black.opacity(0.001)
                 }
             }
             .aspectRatio(1, contentMode: .fit)
@@ -157,7 +194,7 @@ struct ExploreView: View {
                 .lineSpacing(4)
 
             Button(action: {
-                Task { await loadPosts() }
+                Task { await viewModel.fetchPosts(refresh: true) }
             }) {
                 HStack {
                     Image(systemName: "arrow.clockwise")
@@ -174,29 +211,13 @@ struct ExploreView: View {
     // MARK: - Filtered Posts
     private var filteredPosts: [Post] {
         if searchText.isEmpty {
-            return posts
+            return viewModel.posts
         }
-        return posts.filter { post in
+        return viewModel.posts.filter { post in
             let caption = post.caption?.lowercased() ?? ""
             let username = post.user?.username?.lowercased() ?? ""
             let query = searchText.lowercased()
             return caption.contains(query) || username.contains(query)
-        }
-    }
-
-    // MARK: - Load Posts
-    private func loadPosts() async {
-        isLoading = true
-        do {
-            let response = try await ApiService.shared.fetchPosts(limit: 50)
-            withAnimation(.smooth) {
-                posts = response.posts
-                isLoading = false
-            }
-        } catch {
-            withAnimation {
-                isLoading = false
-            }
         }
     }
 }
@@ -207,6 +228,79 @@ struct GridItemButtonStyle: ButtonStyle {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
             .animation(.snappy, value: configuration.isPressed)
+    }
+}
+
+// MARK: - View Model
+@MainActor
+class ExploreViewModel: ObservableObject {
+    @Published var posts: [Post] = []
+    @Published var isLoading = false
+    @Published var hasMore = true
+    @Published var currentPage = 0
+
+    private let pageSize = 20
+
+    func fetchPosts(refresh: Bool = false) async {
+        guard !isLoading else { return }
+
+        if refresh {
+            currentPage = 0
+            hasMore = true
+        }
+
+        isLoading = true
+
+        do {
+            let response = try await NetworkRetryManager.execute(policy: .default) {
+                try await ApiService.shared.fetchPosts(limit: self.pageSize, page: self.currentPage)
+            }
+
+            if refresh {
+                withAnimation(.smooth) {
+                    self.posts = response.posts
+                }
+            } else {
+                withAnimation(.smooth) {
+                    self.posts.append(contentsOf: response.posts)
+                }
+            }
+            self.hasMore = response.hasMore
+            self.isLoading = false
+        } catch {
+            self.isLoading = false
+            ToastManager.shared.error("Failed to load posts: \(error.localizedDescription)")
+        }
+    }
+
+    func loadMore() async {
+        guard hasMore && !isLoading else { return }
+        currentPage += 1
+        await fetchPosts()
+    }
+
+    func search(query: String) async {
+        guard !query.isEmpty else {
+            await fetchPosts(refresh: true)
+            return
+        }
+
+        isLoading = true
+        do {
+            // For search, we'll load more posts first then filter
+            let response = try await NetworkRetryManager.execute(policy: .default) {
+                try await ApiService.shared.fetchPosts(limit: 100, page: 0)
+            }
+
+            withAnimation(.smooth) {
+                self.posts = response.posts
+            }
+            self.hasMore = false
+            self.isLoading = false
+        } catch {
+            self.isLoading = false
+            ToastManager.shared.error("Search failed: \(error.localizedDescription)")
+        }
     }
 }
 

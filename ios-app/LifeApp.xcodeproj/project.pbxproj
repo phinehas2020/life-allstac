@@ -34,6 +34,13 @@
 		D09621A72F11D600001709EF /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D09621A62F11D600001709EF /* NotificationsView.swift */; };
 		D09621AA2F11F355001709EF /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D09621A82F11F355001709EF /* ChatView.swift */; };
 		D09621AB2F11F355001709EF /* MessagesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D09621A92F11F355001709EF /* MessagesView.swift */; };
+		D0B2913E2F12DB8100197986 /* ToastManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0B2913D2F12DB8100197986 /* ToastManager.swift */; };
+		D0B291402F12DB8A00197986 /* LaunchScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0B2913F2F12DB8A00197986 /* LaunchScreen.swift */; };
+		D0B291422F12DBE800197986 /* App+DeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0B291412F12DBE800197986 /* App+DeepLink.swift */; };
+		D0B2914B2F12DC3900197986 /* BackgroundFetchManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0B291472F12DC3900197986 /* BackgroundFetchManager.swift */; };
+		D0B2914C2F12DC3900197986 /* PushNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0B2914A2F12DC3900197986 /* PushNotificationManager.swift */; };
+		D0B2914D2F12DC3900197986 /* ProgressiveImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0B291492F12DC3900197986 /* ProgressiveImageLoader.swift */; };
+		D0B2914E2F12DC3900197986 /* NetworkRetry.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0B291482F12DC3900197986 /* NetworkRetry.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -66,6 +73,17 @@
 		D09621A62F11D600001709EF /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 		D09621A82F11F355001709EF /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
 		D09621A92F11F355001709EF /* MessagesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesView.swift; sourceTree = "<group>"; };
+		D0B2913D2F12DB8100197986 /* ToastManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastManager.swift; sourceTree = "<group>"; };
+		D0B2913F2F12DB8A00197986 /* LaunchScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchScreen.swift; sourceTree = "<group>"; };
+		D0B291412F12DBE800197986 /* App+DeepLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "App+DeepLink.swift"; sourceTree = "<group>"; };
+		D0B291432F12DC0700197986 /* BackgroundFetchManager 2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BackgroundFetchManager 2.swift"; sourceTree = "<group>"; };
+		D0B291442F12DC0700197986 /* NetworkRetry 2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NetworkRetry 2.swift"; sourceTree = "<group>"; };
+		D0B291452F12DC0700197986 /* ProgressiveImageLoader 2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProgressiveImageLoader 2.swift"; sourceTree = "<group>"; };
+		D0B291462F12DC0700197986 /* PushNotificationManager 2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PushNotificationManager 2.swift"; sourceTree = "<group>"; };
+		D0B291472F12DC3900197986 /* BackgroundFetchManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundFetchManager.swift; sourceTree = "<group>"; };
+		D0B291482F12DC3900197986 /* NetworkRetry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkRetry.swift; sourceTree = "<group>"; };
+		D0B291492F12DC3900197986 /* ProgressiveImageLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressiveImageLoader.swift; sourceTree = "<group>"; };
+		D0B2914A2F12DC3900197986 /* PushNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -90,6 +108,7 @@
 		A1000001294A000000000024 /* LifeApp */ = {
 			isa = PBXGroup;
 			children = (
+				D0B291412F12DBE800197986 /* App+DeepLink.swift */,
 				A1000001294A000000000026 /* Models */,
 				A1000001294A000000000027 /* Services */,
 				A1000001294A000000000028 /* Views */,
@@ -122,10 +141,18 @@
 			isa = PBXGroup;
 			children = (
 				A1000001294A00000000000C /* ApiService.swift */,
+				D0B291472F12DC3900197986 /* BackgroundFetchManager.swift */,
+				D0B291482F12DC3900197986 /* NetworkRetry.swift */,
+				D0B291492F12DC3900197986 /* ProgressiveImageLoader.swift */,
+				D0B2914A2F12DC3900197986 /* PushNotificationManager.swift */,
 				A1000001294A00000000000E /* AuthenticationManager.swift */,
 				A1000001294A000000000010 /* AuthTokenManager.swift */,
 				A1000001294A000000000038 /* ImageLoader.swift */,
 				A1000001294A000000000034 /* SupabaseConfig.swift */,
+				D0B291432F12DC0700197986 /* BackgroundFetchManager 2.swift */,
+				D0B291442F12DC0700197986 /* NetworkRetry 2.swift */,
+				D0B291452F12DC0700197986 /* ProgressiveImageLoader 2.swift */,
+				D0B291462F12DC0700197986 /* PushNotificationManager 2.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -133,6 +160,8 @@
 		A1000001294A000000000028 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				D0B2913F2F12DB8A00197986 /* LaunchScreen.swift */,
+				D0B2913D2F12DB8100197986 /* ToastManager.swift */,
 				D09621A82F11F355001709EF /* ChatView.swift */,
 				D09621A92F11F355001709EF /* MessagesView.swift */,
 				D09621A62F11D600001709EF /* NotificationsView.swift */,
@@ -220,6 +249,7 @@
 				D08D96C42F119F1B00B31D43 /* SkeletonView.swift in Sources */,
 				D08D96C52F119F1B00B31D43 /* UploadView.swift in Sources */,
 				A1000001294A000000000001 /* LifeApp.swift in Sources */,
+				D0B291422F12DBE800197986 /* App+DeepLink.swift in Sources */,
 				A1000001294A000000000003 /* ContentView.swift in Sources */,
 				A1000001294A000000000005 /* User.swift in Sources */,
 				A1000001294A000000000007 /* Post.swift in Sources */,
@@ -228,18 +258,24 @@
 				A1000001294A00000000000D /* AuthenticationManager.swift in Sources */,
 				A1000001294A00000000000F /* AuthTokenManager.swift in Sources */,
 				A1000001294A000000000037 /* ImageLoader.swift in Sources */,
+				D0B2913E2F12DB8100197986 /* ToastManager.swift in Sources */,
 				A1000001294A000000000011 /* AuthView.swift in Sources */,
 				A1000001294A000000000013 /* HomeView.swift in Sources */,
 				A1000001294A000000000015 /* ExploreView.swift in Sources */,
 				A1000001294A000000000017 /* EventsView.swift in Sources */,
 				A1000001294A000000000019 /* ProfileView.swift in Sources */,
 				D09621A72F11D600001709EF /* NotificationsView.swift in Sources */,
+				D0B2914B2F12DC3900197986 /* BackgroundFetchManager.swift in Sources */,
+				D0B2914C2F12DC3900197986 /* PushNotificationManager.swift in Sources */,
+				D0B2914D2F12DC3900197986 /* ProgressiveImageLoader.swift in Sources */,
+				D0B2914E2F12DC3900197986 /* NetworkRetry.swift in Sources */,
 				A1000001294A00000000001B /* PostCardView.swift in Sources */,
 				A1000001294A00000000001D /* PostDetailView.swift in Sources */,
 				A1000001294A000000000035 /* PostImageView.swift in Sources */,
 				D09621AA2F11F355001709EF /* ChatView.swift in Sources */,
 				D09621AB2F11F355001709EF /* MessagesView.swift in Sources */,
 				A1000001294A000000000039 /* RatingSheetView.swift in Sources */,
+				D0B291402F12DB8A00197986 /* LaunchScreen.swift in Sources */,
 				A1000001294A000000000033 /* SupabaseConfig.swift in Sources */,
 				A1000001294A00000000003B /* Theme.swift in Sources */,
 				A1000001294A00000000003D /* MainTabView.swift in Sources */,
