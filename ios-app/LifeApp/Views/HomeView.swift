@@ -13,7 +13,6 @@ struct HomeView: View {
     @State private var showingNotifications = false
     @State private var showingMessages = false
     @State private var selectedPost: Post?
-    @State private var showComments = false
     @State private var commentPost: Post?
     @Namespace private var scrollNamespace
 
@@ -71,19 +70,18 @@ struct HomeView: View {
                 MessagesView()
             }
             .fullScreenCover(item: $selectedPost) { post in
-                PostFullScreenView(post: post, showComments: $showComments)
-                    .onDisappear {
-                        if showComments, let selected = selectedPost {
-                            commentPost = selected
-                        }
+                FullScreenPostWrapper(post: post, onCommentTap: {
+                    // Dismiss full screen first, then show comments
+                    selectedPost = nil
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        commentPost = post
                     }
+                })
             }
-            .sheet(isPresented: $showComments) {
-                if let post = commentPost ?? selectedPost {
-                    CommentsSheetView(postId: post.id, initialComments: post.comments)
-                        .presentationDetents([.fraction(0.4), .large] as Set<PresentationDetent>)
-                        .presentationDragIndicator(.hidden)
-                }
+            .sheet(item: $commentPost) { post in
+                CommentsSheetView(postId: post.id, initialComments: post.comments)
+                    .presentationDetents([.fraction(0.4), .large] as Set<PresentationDetent>)
+                    .presentationDragIndicator(.hidden)
             }
         }
         .onAppear {
@@ -161,7 +159,6 @@ struct HomeView: View {
         ForEach(Array(viewModel.posts.enumerated()), id: \.element.id) { index, post in
             PostCardView(post: post, onCommentTap: {
                 commentPost = post
-                showComments = true
             })
             .onTapGesture {
                 HapticManager.selection()
@@ -332,6 +329,27 @@ class HomeViewModel: ObservableObject {
         guard hasMore && !isLoading else { return }
         currentPage += 1
         await fetchPosts()
+    }
+}
+
+// MARK: - Full Screen Post Wrapper
+struct FullScreenPostWrapper: View {
+    let post: Post
+    let onCommentTap: () -> Void
+    @State private var showComments = false
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        PostFullScreenView(post: post, showComments: $showComments)
+            .onChange(of: showComments) { _, newValue in
+                if newValue {
+                    showComments = false
+                    dismiss()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        onCommentTap()
+                    }
+                }
+            }
     }
 }
 

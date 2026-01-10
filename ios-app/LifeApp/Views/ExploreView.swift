@@ -11,7 +11,7 @@ struct ExploreView: View {
     @StateObject private var viewModel = ExploreViewModel()
     @State private var searchText = ""
     @State private var selectedPost: Post?
-    @State private var showComments = false
+    @State private var commentPost: Post?
 
     private let columns = [
         GridItem(.flexible(), spacing: 2),
@@ -52,14 +52,17 @@ struct ExploreView: View {
                 await viewModel.fetchPosts(refresh: true)
             }
             .fullScreenCover(item: $selectedPost) { post in
-                PostFullScreenView(post: post, showComments: $showComments)
+                FullScreenPostWrapper(post: post, onCommentTap: {
+                    selectedPost = nil
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        commentPost = post
+                    }
+                })
             }
-            .sheet(isPresented: $showComments) {
-                if let post = selectedPost {
-                    CommentsSheetView(postId: post.id, initialComments: post.comments)
-                        .presentationDetents([.fraction(0.4), .large] as Set<PresentationDetent>)
-                        .presentationDragIndicator(.hidden)
-                }
+            .sheet(item: $commentPost) { post in
+                CommentsSheetView(postId: post.id, initialComments: post.comments)
+                    .presentationDetents([.fraction(0.4), .large] as Set<PresentationDetent>)
+                    .presentationDragIndicator(.hidden)
             }
         }
         .overlay(ToastContainerView())
