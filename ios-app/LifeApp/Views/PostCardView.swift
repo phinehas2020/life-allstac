@@ -9,6 +9,7 @@ import SwiftUI
 
 struct PostCardView: View {
     let post: Post
+    var onCommentTap: (() -> Void)? = nil
     @State private var isLiked: Bool
     @State private var likeCount: Int
     @State private var isAnimatingLike = false
@@ -16,8 +17,9 @@ struct PostCardView: View {
     @State private var particles: [ParticleState] = []
     @State private var imageLoaded = false
 
-    init(post: Post) {
+    init(post: Post, onCommentTap: (() -> Void)? = nil) {
         self.post = post
+        self.onCommentTap = onCommentTap
         _isLiked = State(initialValue: post.likedByCurrentUser ?? false)
         _likeCount = State(initialValue: post.stats?.likes ?? 0)
     }
@@ -225,7 +227,10 @@ struct PostCardView: View {
             }
             .buttonStyle(ScaleButtonStyle())
 
-            Button(action: {}) {
+            Button(action: {
+                HapticManager.impact(.light)
+                onCommentTap?()
+            }) {
                 Image(systemName: "bubble.right")
                     .font(.title2)
                     .foregroundColor(Theme.text)

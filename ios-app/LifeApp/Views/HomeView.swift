@@ -12,6 +12,9 @@ struct HomeView: View {
     @State private var showScrollToTop = false
     @State private var showingNotifications = false
     @State private var showingMessages = false
+    @State private var selectedPost: Post?
+    @State private var showComments = false
+    @State private var commentPost: Post?
     @Namespace private var scrollNamespace
 
     var body: some View {
@@ -66,6 +69,21 @@ struct HomeView: View {
             }
             .navigationDestination(isPresented: $showingMessages) {
                 MessagesView()
+            }
+            .fullScreenCover(item: $selectedPost) { post in
+                PostFullScreenView(post: post, showComments: $showComments)
+                    .onDisappear {
+                        if showComments, let selected = selectedPost {
+                            commentPost = selected
+                        }
+                    }
+            }
+            .sheet(isPresented: $showComments) {
+                if let post = commentPost ?? selectedPost {
+                    CommentsSheetView(postId: post.id, initialComments: post.comments)
+                        .presentationDetents([.fraction(0.4), .large] as Set<PresentationDetent>)
+                        .presentationDragIndicator(.hidden)
+                }
             }
         }
         .onAppear {
@@ -141,23 +159,27 @@ struct HomeView: View {
     @ViewBuilder
     private var feedView: some View {
         ForEach(Array(viewModel.posts.enumerated()), id: \.element.id) { index, post in
-            NavigationLink(destination: PostDetailView(postId: post.id)) {
-                PostCardView(post: post)
-                    .onAppear {
-                        // Efficient threshold-based pagination
-                        let threshold = viewModel.posts.count - 5
-                        if index >= threshold && viewModel.hasMore && !viewModel.isLoading {
-                            Task {
-                                await viewModel.loadMore()
-                            }
-                        }
-                    }
-                    .transition(.asymmetric(
-                        insertion: .opacity.combined(with: .move(edge: .bottom)),
-                        removal: .opacity
-                    ))
+            PostCardView(post: post, onCommentTap: {
+                commentPost = post
+                showComments = true
+            })
+            .onTapGesture {
+                HapticManager.selection()
+                selectedPost = post
             }
-            .buttonStyle(PlainButtonStyle())
+            .onAppear {
+                // Efficient threshold-based pagination
+                let threshold = viewModel.posts.count - 5
+                if index >= threshold && viewModel.hasMore && !viewModel.isLoading {
+                    Task {
+                        await viewModel.loadMore()
+                    }
+                }
+            }
+            .transition(.asymmetric(
+                insertion: .opacity.combined(with: .move(edge: .bottom)),
+                removal: .opacity
+            ))
         }
 
         // Loading more indicator
