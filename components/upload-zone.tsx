@@ -37,9 +37,9 @@ export function UploadZone({
 
         video.onloadedmetadata = function () {
           window.URL.revokeObjectURL(video.src)
-          // Increased limit to 60 seconds
-          if (video.duration > 60) {
-            resolve({ file, error: `${file.name} exceeds 60 seconds limit` })
+          // Increased limit to 120 seconds
+          if (video.duration > 120) {
+            resolve({ file, error: `${file.name} exceeds 120 seconds limit` })
           } else {
             resolve({ file })
           }
