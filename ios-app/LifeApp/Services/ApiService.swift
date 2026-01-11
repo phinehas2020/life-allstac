@@ -819,6 +819,59 @@ class ApiService {
             throw error
         }
     }
+
+    // MARK: - Profile
+
+    func updateProfile(username: String?, bio: String?, avatarUrl: String? = nil) async throws {
+        guard let url = URL(string: "\(baseURL)/profile") else {
+            throw ApiError.invalidURL
+        }
+
+        print("👤 [API] Updating profile")
+
+        var body: [String: Any?] = [:]
+        if let username = username {
+            body["username"] = username
+        }
+        if let bio = bio {
+            body["bio"] = bio
+        }
+        if let avatarUrl = avatarUrl {
+            body["avatarUrl"] = avatarUrl
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "PATCH"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        if let token = AuthTokenManager.shared.getAccessToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("❌ [API] Invalid response type")
+                throw ApiError.invalidResponse
+            }
+
+            print("👤 [API] Response status: \(httpResponse.statusCode)")
+
+            if httpResponse.statusCode != 200 {
+                let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
+                print("❌ [API] Error response: \(errorBody)")
+                throw ApiError.httpError(httpResponse.statusCode)
+            }
+
+            print("✅ [API] Profile updated successfully")
+        } catch {
+            print("❌ [API] Update profile error: \(error.localizedDescription)")
+            throw error
+        }
+    }
 }
 
 // MARK: - Error Types

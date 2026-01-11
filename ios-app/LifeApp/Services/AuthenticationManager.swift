@@ -180,4 +180,16 @@ class AuthenticationManager: ObservableObject {
         isAuthenticated = false
         print("🔑 [AuthManager] Logout complete")
     }
+
+    func refreshCurrentUser() async {
+        guard let current = currentUser else { return }
+        do {
+            let profile = try await ApiService.shared.fetchUserProfile(username: current.id)
+            await MainActor.run {
+                self.currentUser = profile.userModel
+            }
+        } catch {
+            print("⚠️ [AuthManager] Failed to refresh user: \(error.localizedDescription)")
+        }
+    }
 }

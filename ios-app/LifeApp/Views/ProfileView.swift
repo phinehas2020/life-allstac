@@ -15,6 +15,8 @@ struct ProfileView: View {
     @State private var errorMessage: String?
     @State private var selectedPost: Post?
     @State private var navigatingToChat: MessageThread? = nil
+    @State private var showingSettings = false
+    @State private var showingEditProfile = false
     
     init(username: String? = nil) {
         self.username = username
@@ -59,11 +61,15 @@ struct ProfileView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
-                        Button(action: {}) {
+                        Button(action: {
+                            showingSettings = true
+                        }) {
                             Label("Settings", systemImage: "gearshape")
                         }
 
-                        Button(action: {}) {
+                        Button(action: {
+                            showingEditProfile = true
+                        }) {
                             Label("Edit Profile", systemImage: "pencil")
                         }
 
@@ -89,6 +95,16 @@ struct ProfileView: View {
             }
             .navigationDestination(item: $navigatingToChat) { thread in
                 ChatView(thread: thread)
+            }
+            .navigationDestination(isPresented: $showingSettings) {
+                SettingsView()
+            }
+            .sheet(isPresented: $showingEditProfile) {
+                EditProfileView(onSave: {
+                    Task {
+                        await loadProfile()
+                    }
+                })
             }
         }
     }
@@ -177,7 +193,9 @@ struct ProfileView: View {
     private var actionButtons: some View {
         HStack(spacing: Theme.Spacing.md) {
             if isCurrentUser {
-                Button(action: {}) {
+                Button(action: {
+                    showingEditProfile = true
+                }) {
                     Text("Edit Profile")
                         .frame(maxWidth: .infinity)
                 }
