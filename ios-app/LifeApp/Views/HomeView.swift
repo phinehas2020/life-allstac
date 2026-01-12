@@ -14,6 +14,7 @@ struct HomeView: View {
     @State private var showingMessages = false
     @State private var selectedPost: Post?
     @State private var commentPost: Post?
+    @State private var hasUnreadNotifications = false
     @Namespace private var scrollNamespace
 
     var body: some View {
@@ -90,6 +91,28 @@ struct HomeView: View {
                     await viewModel.fetchPosts()
                 }
             }
+            // Check for unread notifications
+            Task {
+                await checkUnreadNotifications()
+            }
+        }
+        .onChange(of: showingNotifications) { _, isShowing in
+            // Clear the dot when returning from notifications
+            if !isShowing {
+                hasUnreadNotifications = false
+            }
+        }
+    }
+
+    private func checkUnreadNotifications() async {
+        do {
+            let response = try await ApiService.shared.fetchNotifications()
+            let unreadCount = response.notifications.filter { !$0.isRead }.count
+            await MainActor.run {
+                hasUnreadNotifications = unreadCount > 0
+            }
+        } catch {
+            print("❌ [Home] Error checking notifications: \(error)")
         }
     }
 
@@ -113,11 +136,13 @@ struct HomeView: View {
                         .font(.title2)
                         .foregroundColor(Theme.text)
 
-                    // Notification dot
-                    Circle()
-                        .fill(Theme.likeColor)
-                        .frame(width: 8, height: 8)
-                        .offset(x: 8, y: -8)
+                    // Notification dot - only show if unread
+                    if hasUnreadNotifications {
+                        Circle()
+                            .fill(Theme.likeColor)
+                            .frame(width: 8, height: 8)
+                            .offset(x: 8, y: -8)
+                    }
                 }
             }
             .padding(.trailing, Theme.Spacing.sm)

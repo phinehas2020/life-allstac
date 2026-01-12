@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AVKit
 
 struct PostCardView: View {
     let post: Post
@@ -16,6 +17,8 @@ struct PostCardView: View {
     @State private var showHeartOverlay = false
     @State private var particles: [ParticleState] = []
     @State private var imageLoaded = false
+    @State private var isPlayingVideo = false
+    @State private var videoPlayer: AVPlayer?
 
     init(post: Post, onCommentTap: (() -> Void)? = nil) {
         self.post = post
@@ -119,57 +122,70 @@ struct PostCardView: View {
     // MARK: - Media View
     private var mediaView: some View {
         ZStack {
-            // Main image with blurhash placeholder
-            let displayUrlString = post.isVideo ? (post.thumbnailUrl ?? post.mediaUrl) : post.mediaUrl
-            if let url = URL(string: displayUrlString) {
-                GeometryReader { geometry in
-                    CachedAsyncImage(url: url) { image in
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: geometry.size.width)
-                            .clipped()
-                            .transition(.opacity.combined(with: .scale(scale: 1.02)))
-                            .onAppear {
-                                withAnimation(.smooth) {
-                                    imageLoaded = true
-                                }
-                            }
-                    } placeholder: {
-                        BlurHashPlaceholder(
-                            blurhash: post.blurhash,
-                            size: CGSize(width: 32, height: 32)
-                        )
-                        .overlay(
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                        )
+            // Show video player if playing, otherwise show thumbnail
+            if post.isVideo && isPlayingVideo, let player = videoPlayer {
+                VideoPlayer(player: player)
+                    .aspectRatio(post.aspectRatio, contentMode: .fit)
+                    .onDisappear {
+                        player.pause()
+                        isPlayingVideo = false
                     }
-                }
-                .aspectRatio(post.aspectRatio, contentMode: .fit)
             } else {
-                // Fallback for invalid URL
-                Rectangle()
-                    .fill(Color.gray.opacity(0.1))
-                    .aspectRatio(1.0, contentMode: .fit)
-                    .overlay(
-                        VStack(spacing: 8) {
-                            Image(systemName: "photo")
-                                .font(.largeTitle)
-                                .foregroundColor(.gray)
-                            Text("Image unavailable")
-                                .font(Theme.Fonts.caption())
-                                .foregroundColor(Theme.secondaryText)
+                // Main image with blurhash placeholder
+                let displayUrlString = post.isVideo ? (post.thumbnailUrl ?? post.mediaUrl) : post.mediaUrl
+                if let url = URL(string: displayUrlString) {
+                    GeometryReader { geometry in
+                        CachedAsyncImage(url: url) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: geometry.size.width)
+                                .clipped()
+                                .transition(.opacity.combined(with: .scale(scale: 1.02)))
+                                .onAppear {
+                                    withAnimation(.smooth) {
+                                        imageLoaded = true
+                                    }
+                                }
+                        } placeholder: {
+                            BlurHashPlaceholder(
+                                blurhash: post.blurhash,
+                                size: CGSize(width: 32, height: 32)
+                            )
+                            .overlay(
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            )
                         }
-                    )
-            }
+                    }
+                    .aspectRatio(post.aspectRatio, contentMode: .fit)
+                } else {
+                    // Fallback for invalid URL
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.1))
+                        .aspectRatio(1.0, contentMode: .fit)
+                        .overlay(
+                            VStack(spacing: 8) {
+                                Image(systemName: "photo")
+                                    .font(.largeTitle)
+                                    .foregroundColor(.gray)
+                                Text("Image unavailable")
+                                    .font(Theme.Fonts.caption())
+                                    .foregroundColor(Theme.secondaryText)
+                            }
+                        )
+                }
 
-            // Video play button
-            if post.isVideo {
-                Image(systemName: "play.circle.fill")
-                    .font(.system(size: 60))
-                    .foregroundColor(.white.opacity(0.9))
-                    .shadow(color: Color.black.opacity(0.3), radius: 8)
+                // Video play button - tappable
+                if post.isVideo {
+                    Button(action: playVideo) {
+                        Image(systemName: "play.circle.fill")
+                            .font(.system(size: 60))
+                            .foregroundColor(.white.opacity(0.9))
+                            .shadow(color: Color.black.opacity(0.3), radius: 8)
+                    }
+                    .buttonStyle(ScaleButtonStyle())
+                }
             }
 
             // Heart overlay animation
@@ -193,6 +209,19 @@ struct PostCardView: View {
         .onTapGesture(count: 2) {
             handleDoubleTap()
         }
+    }
+
+    private func playVideo() {
+        guard post.isVideo else { return }
+
+        HapticManager.impact(.light)
+
+        if videoPlayer == nil, let videoURL = URL(string: post.mediaUrl) {
+            videoPlayer = AVPlayer(url: videoURL)
+        }
+
+        isPlayingVideo = true
+        videoPlayer?.play()
     }
 
     private var heartOverlayView: some View {

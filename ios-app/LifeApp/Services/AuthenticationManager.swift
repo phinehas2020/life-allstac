@@ -67,11 +67,23 @@ class AuthenticationManager: ObservableObject {
             }
             
             if httpResponse.statusCode == 401 || httpResponse.statusCode == 403 {
-                print("❌ [AuthManager] Session expired or invalid. Logging out.")
-                await MainActor.run {
-                    self.logout()
+                print("⚠️ [AuthManager] Access token expired, attempting refresh...")
+
+                // Try to refresh the token
+                if let refreshed = await refreshSession() {
+                    print("✅ [AuthManager] Token refreshed, retrying user fetch...")
+                    await MainActor.run {
+                        self.currentUser = refreshed
+                        self.isAuthenticated = true
+                    }
+                    return
+                } else {
+                    print("❌ [AuthManager] Token refresh failed. Logging out.")
+                    await MainActor.run {
+                        self.logout()
+                    }
+                    return
                 }
-                return
             }
             
             guard httpResponse.statusCode == 200 else {
@@ -179,6 +191,24 @@ class AuthenticationManager: ObservableObject {
         currentUser = nil
         isAuthenticated = false
         print("🔑 [AuthManager] Logout complete")
+    }
+
+    /// Attempt to refresh the session using stored refresh token
+    private func refreshSession() async -> User? {
+        guard let refreshToken = tokenManager.getRefreshToken() else {
+            print("❌ [AuthManager] No refresh token available")
+            return nil
+        }
+
+        do {
+            let response = try await ApiService.shared.refreshToken(refreshToken: refreshToken)
+            print("✅ [AuthManager] Session refreshed, saving new tokens")
+            tokenManager.saveTokens(accessToken: response.access_token, refreshToken: response.refresh_token)
+            return response.user
+        } catch {
+            print("❌ [AuthManager] Refresh failed: \(error.localizedDescription)")
+            return nil
+        }
     }
 
     func refreshCurrentUser() async {

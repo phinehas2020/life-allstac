@@ -115,6 +115,70 @@ class ApiService {
         }
     }
     
+    /// Refresh access token using refresh token
+    func refreshToken(refreshToken: String) async throws -> AuthResponse {
+        let config = SupabaseConfig.shared
+        print("🔄 [REFRESH] Attempting to refresh access token...")
+
+        guard let url = URL(string: "\(config.supabaseURL)/auth/v1/token?grant_type=refresh_token") else {
+            print("❌ [REFRESH] Invalid URL")
+            throw ApiError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(config.supabaseAnonKey, forHTTPHeaderField: "apikey")
+
+        let body: [String: Any] = [
+            "refresh_token": refreshToken
+        ]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            print("❌ [REFRESH] Invalid response type")
+            throw ApiError.invalidResponse
+        }
+
+        print("🔄 [REFRESH] Response status code: \(httpResponse.statusCode)")
+
+        if httpResponse.statusCode == 200 {
+            let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+
+            guard let accessToken = json?["access_token"] as? String,
+                  let newRefreshToken = json?["refresh_token"] as? String,
+                  let userDict = json?["user"] as? [String: Any],
+                  let userId = userDict["id"] as? String else {
+                print("❌ [REFRESH] Missing required fields in response")
+                throw ApiError.invalidResponse
+            }
+
+            print("✅ [REFRESH] Token refreshed successfully")
+
+            let user = User(
+                id: userId,
+                username: userDict["email"] as? String,
+                email: userDict["email"] as? String,
+                avatar_url: nil,
+                bio: nil,
+                photographer_status: nil,
+                photographer_influence: nil,
+                photographer_total_ratings: nil,
+                photographer_accuracy_percentage: nil,
+                is_admin: nil,
+                created_at: (userDict["created_at"] as? String) ?? ""
+            )
+
+            return AuthResponse(access_token: accessToken, refresh_token: newRefreshToken, user: user)
+        } else {
+            let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
+            print("❌ [REFRESH] Failed: \(errorMessage)")
+            throw ApiError.httpError(httpResponse.statusCode)
+        }
+    }
+
     /// Sign up directly with Supabase
     /// Note: You need to configure SupabaseConfig.swift with your credentials
     func signup(email: String, password: String, username: String) async throws -> AuthResponse {
@@ -869,6 +933,67 @@ class ApiService {
             print("✅ [API] Profile updated successfully")
         } catch {
             print("❌ [API] Update profile error: \(error.localizedDescription)")
+            throw error
+        }
+    }
+
+    /// Upload avatar image and return the public URL
+    func uploadAvatar(imageData: Data) async throws -> String {
+        guard let url = URL(string: "\(baseURL)/profile/avatar") else {
+            throw ApiError.invalidURL
+        }
+
+        print("📸 [API] Uploading avatar...")
+
+        let boundary = UUID().uuidString
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+
+        if let token = AuthTokenManager.shared.getAccessToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        var body = Data()
+
+        // Add image data
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"avatar.jpg\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
+        body.append(imageData)
+        body.append("\r\n".data(using: .utf8)!)
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+
+        request.httpBody = body
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("❌ [API] Invalid response type")
+                throw ApiError.invalidResponse
+            }
+
+            print("📸 [API] Avatar upload response status: \(httpResponse.statusCode)")
+
+            if httpResponse.statusCode != 200 && httpResponse.statusCode != 201 {
+                let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
+                print("❌ [API] Avatar upload error: \(errorBody)")
+                throw ApiError.httpError(httpResponse.statusCode)
+            }
+
+            // Parse response to get avatar URL
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let avatarUrl = json["avatarUrl"] as? String else {
+                print("❌ [API] Could not parse avatar URL from response")
+                throw ApiError.invalidResponse
+            }
+
+            print("✅ [API] Avatar uploaded successfully: \(avatarUrl)")
+            return avatarUrl
+        } catch {
+            print("❌ [API] Avatar upload failed: \(error.localizedDescription)")
             throw error
         }
     }

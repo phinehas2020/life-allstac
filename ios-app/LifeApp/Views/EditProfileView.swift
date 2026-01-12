@@ -16,6 +16,7 @@ struct EditProfileView: View {
     @State private var bio: String
     @State private var avatarItem: PhotosPickerItem?
     @State private var avatarImage: Image?
+    @State private var avatarData: Data?
     @State private var isLoading = false
     @State private var errorMessage: String?
 
@@ -78,10 +79,6 @@ struct EditProfileView: View {
                                     .foregroundColor(.white)
                                     .background(Circle().fill(Color.black.opacity(0.3)))
                             }
-                        }
-                        .onAppear {
-                            username = authManager.currentUser?.username ?? ""
-                            bio = authManager.currentUser?.bio ?? ""
                         }
 
                         Spacer()
@@ -151,6 +148,8 @@ struct EditProfileView: View {
                     if let data = try? await newItem?.loadTransferable(type: Data.self),
                        let uiImage = UIImage(data: data) {
                         avatarImage = Image(uiImage: uiImage)
+                        // Compress and store as JPEG for upload
+                        avatarData = uiImage.jpegData(compressionQuality: 0.8)
                     }
                 }
             }
@@ -183,10 +182,18 @@ struct EditProfileView: View {
 
         Task {
             do {
+                var newAvatarUrl: String? = nil
+
+                // Upload avatar if user selected a new image
+                if let imageData = avatarData {
+                    newAvatarUrl = try await ApiService.shared.uploadAvatar(imageData: imageData)
+                }
+
+                // Update profile with username, bio, and avatar URL (if uploaded)
                 try await ApiService.shared.updateProfile(
                     username: trimmedUsername.isEmpty ? nil : trimmedUsername,
                     bio: trimmedBio.isEmpty ? nil : trimmedBio,
-                    avatarUrl: nil // TODO: Implement image upload
+                    avatarUrl: newAvatarUrl
                 )
 
                 // Refresh current user data

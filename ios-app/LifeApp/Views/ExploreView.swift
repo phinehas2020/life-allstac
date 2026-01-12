@@ -143,14 +143,16 @@ struct ExploreView: View {
     }
 
     private func gridItem(_ post: Post) -> some View {
-        Button(action: {
+        let displayUrl = post.isVideo ? (post.thumbnailUrl ?? post.mediaUrl) : post.mediaUrl
+
+        return Button(action: {
             HapticManager.selection()
             selectedPost = post
         }) {
             GeometryReader { geometry in
                 ZStack {
-                    // Cached image
-                    CachedAsyncImage(url: URL(string: post.mediaUrl)) { image in
+                    // Cached image (use thumbnail for videos)
+                    CachedAsyncImage(url: URL(string: displayUrl)) { image in
                         image
                             .resizable()
                             .aspectRatio(contentMode: .fill)

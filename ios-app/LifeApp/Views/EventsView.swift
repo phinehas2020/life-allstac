@@ -285,18 +285,39 @@ struct EventDetailView: View {
     }
 
     private func gridItem(_ post: Post) -> some View {
-        GeometryReader { geometry in
-            CachedAsyncImage(url: URL(string: post.mediaUrl)) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: geometry.size.width, height: geometry.size.width)
-                    .clipped()
-            } placeholder: {
-                BlurHashPlaceholder(
-                    blurhash: post.blurhash,
-                    size: CGSize(width: 32, height: 32)
-                )
+        let displayUrl = post.isVideo ? (post.thumbnailUrl ?? post.mediaUrl) : post.mediaUrl
+
+        return GeometryReader { geometry in
+            ZStack {
+                CachedAsyncImage(url: URL(string: displayUrl)) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: geometry.size.width, height: geometry.size.width)
+                        .clipped()
+                } placeholder: {
+                    BlurHashPlaceholder(
+                        blurhash: post.blurhash,
+                        size: CGSize(width: 32, height: 32)
+                    )
+                }
+
+                // Video indicator
+                if post.isVideo {
+                    VStack {
+                        HStack {
+                            Spacer()
+                            Image(systemName: "play.fill")
+                                .font(.caption)
+                                .foregroundColor(.white)
+                                .padding(6)
+                                .background(Color.black.opacity(0.5))
+                                .clipShape(Circle())
+                                .padding(6)
+                        }
+                        Spacer()
+                    }
+                }
             }
         }
         .aspectRatio(1, contentMode: .fit)
