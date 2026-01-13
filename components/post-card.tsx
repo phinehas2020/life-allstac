@@ -351,6 +351,7 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
               onClick={handleDownload}
               disabled={downloading}
               className="w-8 h-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10"
+              aria-label="Download"
             >
               <Download className="w-4 h-4" />
             </Button>
@@ -359,6 +360,7 @@ export function PostCard({ post, currentUserId, onLikeUpdate }: PostCardProps) {
               size="icon"
               onClick={handleShare}
               className="w-8 h-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10"
+              aria-label="Share"
             >
               <Share2 className="w-4 h-4" />
             </Button>

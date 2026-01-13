@@ -217,12 +217,12 @@ export function NavBar() {
             {user ? (
               <>
                 <Link href="/messages">
-                  <Button variant="ghost" size="icon" className="rounded-full w-10 h-10 hover:bg-secondary">
+                  <Button variant="ghost" size="icon" className="rounded-full w-10 h-10 hover:bg-secondary" aria-label="Messages">
                     <MessageCircle className="w-5 h-5" />
                   </Button>
                 </Link>
                 <Link href="/notifications">
-                  <Button variant="ghost" size="icon" className="rounded-full w-10 h-10 hover:bg-secondary relative">
+                  <Button variant="ghost" size="icon" className="rounded-full w-10 h-10 hover:bg-secondary relative" aria-label="Notifications">
                     <Bell className="w-5 h-5" />
                     {unreadCount > 0 && (
                       <>
@@ -233,7 +233,7 @@ export function NavBar() {
                   </Button>
                 </Link>
                 <Link href={`/profile/${userData?.username || user.id}`}>
-                  <Button variant="ghost" size="icon" className="rounded-full w-10 h-10 hover:bg-secondary">
+                  <Button variant="ghost" size="icon" className="rounded-full w-10 h-10 hover:bg-secondary" aria-label="My Profile">
                     <User className="w-5 h-5" />
                   </Button>
                 </Link>
@@ -242,6 +242,7 @@ export function NavBar() {
                   size="icon"
                   onClick={handleLogout}
                   className="rounded-full w-10 h-10 hover:bg-secondary text-gray-500 hover:text-destructive"
+                  aria-label="Sign out"
                 >
                   <LogOut className="w-5 h-5" />
                 </Button>
@@ -265,7 +266,7 @@ export function NavBar() {
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center space-x-2">
             <Link href="/upload">
-                <Button size="icon" variant="ghost" className="rounded-full">
+                <Button size="icon" variant="ghost" className="rounded-full" aria-label="Upload photo or video">
                     <Upload className="w-5 h-5" />
                 </Button>
             </Link>

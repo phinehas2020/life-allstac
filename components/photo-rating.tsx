@@ -147,6 +147,7 @@ export function PhotoRating({
               onMouseEnter={() => setHoveredRating(rating)}
               onMouseLeave={() => setHoveredRating(0)}
               className="transition-transform hover:scale-110"
+              aria-label={`Rate ${rating} stars`}
             >
               <Star
                 className={cn(
